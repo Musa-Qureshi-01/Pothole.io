@@ -9,7 +9,7 @@ python-multipart>=0.0.9
 numpy>=1.26
 
 # -------- Image Processing --------
-opencv-python>=4.9
+opencv-python-headless>=4.9
 
 # -------- ONNX Inference --------
 onnxruntime>=1.17
