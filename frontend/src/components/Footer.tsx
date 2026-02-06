@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Github, Linkedin, Twitter, Mail, MapPin, Phone } from 'lucide-react';
+import { Github, Linkedin, Twitter, Mail, MapPin, Phone, Globe } from 'lucide-react';
 
 const PRODUCT_LINKS = [
   { to: '/prediction', label: 'Detection' },
@@ -32,10 +32,10 @@ const LEGAL_LINKS = [
 ];
 
 const SOCIAL = [
-  { name: 'Twitter', icon: Twitter, href: '#', color: 'hover:text-sky-500' },
-  { name: 'LinkedIn', icon: Linkedin, href: '#', color: 'hover:text-blue-600' },
-  { name: 'GitHub', icon: Github, href: '#', color: 'hover:text-slate-700 dark:hover:text-white' },
-  { name: 'Email', icon: Mail, href: 'mailto:support@potholeai.com', color: 'hover:text-emerald-500' },
+  { name: 'Portfolio', icon: Globe, href: 'https://peerlist.io/musaqureshi', color: 'hover:text-emerald-500' },
+  { name: 'LinkedIn', icon: Linkedin, href: 'https://www.linkedin.com/in/musaqureshi', color: 'hover:text-blue-600' },
+  { name: 'GitHub', icon: Github, href: 'https://github.com/Musa-Qureshi-01', color: 'hover:text-slate-700 dark:hover:text-white' },
+  { name: 'X', icon: Twitter, href: 'https://x.com/Musa_Qureshi_01', color: 'hover:text-sky-500' },
 ];
 
 export function Footer() {
@@ -69,6 +69,8 @@ export function Footer() {
                   <motion.a
                     key={social.name}
                     href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     aria-label={social.name}
                     whileHover={{ scale: 1.2, y: -2 }}
                     whileTap={{ scale: 0.95 }}
@@ -206,7 +208,7 @@ export function Footer() {
           className="flex flex-col lg:flex-row justify-between items-center gap-6"
         >
           <div className="text-sm text-slate-600 dark:text-slate-400">
-            <p>© {currentYear} Pothole AI. All rights reserved.</p>
+            <p>© {currentYear} Musa. All rights reserved.</p>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">Built with ❤️ for civic infrastructure.</p>
           </div>
 
