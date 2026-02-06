@@ -9,7 +9,7 @@ export const useSupabase = () => {
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
     })
-    return () => data.unsubscribe()
+    return () => data.subscription.unsubscribe()
   }, [])
 
   return { user }

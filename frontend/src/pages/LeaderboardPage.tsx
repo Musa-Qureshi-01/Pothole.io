@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Medal, Award, Flame, User, TrendingUp, MapPin, CheckCircle2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
+
 
 type Period = 'daily' | 'weekly' | 'monthly' | 'yearly';
 

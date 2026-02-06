@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabaseClient'
 export const LeaderboardPage = () => {
   const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'month'>('all')
+
 
   useEffect(() => {
     fetchLeaderboard()

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/SupabaseAuthContext'
-import { motion } from 'framer-motion'
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { CheckCircle2, AlertTriangle, Clock, MapPin, Upload, Camera, FileCheck } from 'lucide-react'
+
+import { CheckCircle2, AlertTriangle, Clock, Upload, Camera, FileCheck } from 'lucide-react'
 
 export const WorkerTaskPage = () => {
   const { user } = useAuth()
@@ -130,7 +130,7 @@ export const WorkerTaskPage = () => {
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-mono text-xs text-slate-400">#{task.id.substring(0, 8)}</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${task.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          'bg-blue-50 text-blue-700 border-blue-200'
+                        'bg-blue-50 text-blue-700 border-blue-200'
                         }`}>
                         {task.status}
                       </span>

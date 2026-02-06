@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { motion } from 'framer-motion'
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
-import { CheckCircle2, AlertTriangle, Clock, Calendar, Search, Filter, MapPin, User, ChevronRight } from 'lucide-react'
+import { CheckCircle2, Clock, Calendar, Search, Filter, User, ChevronRight } from 'lucide-react'
 
 export const AdminDashboard = () => {
   const [reports, setReports] = useState<any[]>([])

@@ -1,5 +1,4 @@
 import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
 import { cn } from "../../lib/utils"
 // Note: We don't have radix installed actually, so let's skip Slot for now and use cleaner standard Button
 

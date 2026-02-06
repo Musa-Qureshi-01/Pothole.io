@@ -4,7 +4,7 @@ import { Chatbot } from '../components/ChatBot';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Mail, Phone, MapPin, Clock, ArrowRight, CheckCircle2, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, ArrowRight, CheckCircle2, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function ContactPage() {

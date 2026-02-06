@@ -1,5 +1,5 @@
-import { BarChart3, Target, Crosshair, Percent } from 'lucide-react';
-import { Card, CardContent } from './ui/Card';
+import { Target, BarChart3, Crosshair, Percent } from 'lucide-react';
+
 
 interface AIMetricsProps {
     confidence: number; // 0.0 to 1.0
