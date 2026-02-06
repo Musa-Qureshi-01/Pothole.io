@@ -3,7 +3,7 @@
 > **AI-Powered Civic Infrastructure Reporting System**
 > 
 > A comprehensive web application that enables citizens to report potholes, track repairs, and engage with a community of civic workers using advanced AI detection and intelligent assistance.
-
+## [Preview](https://pothole-io.vercel.app/)
 ---
 ## ✨ Overview
 
