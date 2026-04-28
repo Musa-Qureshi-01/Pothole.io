@@ -14,12 +14,12 @@ export function ThemeToggle() {
         const newTheme = isDark ? 'light' : 'dark';
         setTheme(newTheme);
       }}
-      className="relative w-14 h-7 rounded-full bg-slate-200 dark:bg-slate-700 transition-colors shadow-inner flex items-center px-1"
+      className="relative flex h-7 w-14 items-center rounded-full bg-slate-200 px-1 shadow-inner transition-colors dark:bg-slate-700"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
       <motion.div
-        className="w-5 h-5 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center"
+        className="flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm dark:bg-slate-800"
         animate={{ x: isDark ? 28 : 0 }}
         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       >

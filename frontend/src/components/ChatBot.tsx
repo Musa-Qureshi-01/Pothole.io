@@ -41,12 +41,31 @@ export const Chatbot = () => {
       const { data } = await fetchChatHistory(user?.id || '')
 
       if (data) {
-        const formattedMessages = data.map((msg: any) => ({
-          id: msg.id,
-          text: msg.message,
-          isUser: true,
-          timestamp: new Date(msg.created_at),
-        }))
+        const formattedMessages = [...data]
+          .reverse()
+          .flatMap((msg: any) => {
+            const messageParts: Message[] = []
+
+            if (msg.message?.trim()) {
+              messageParts.push({
+                id: `${msg.id}-user`,
+                text: msg.message,
+                isUser: true,
+                timestamp: new Date(msg.created_at),
+              })
+            }
+
+            if (msg.response?.trim()) {
+              messageParts.push({
+                id: `${msg.id}-assistant`,
+                text: msg.response,
+                isUser: false,
+                timestamp: new Date(msg.created_at),
+              })
+            }
+
+            return messageParts
+          })
         setMessages(formattedMessages)
       }
       setInitialized(true)

@@ -121,7 +121,7 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
-            <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
+            <Route path="/contact" element={<Layout mode="public"><ContactPage /></Layout>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         )}

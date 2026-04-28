@@ -68,10 +68,10 @@ export function HomePage() {
 
             <Link
               to="/"
-              className="text-xl font-bold text-slate-900 dark:text-white tracking-tight shrink-0 flex items-center gap-2"
+              className="text-xl font-bold text-slate-900 dark:text-white tracking-tight shrink-0 flex items-center gap-2 group"
             >
-              <Logo className="w-9 h-9" />
-              Pothole AI
+              <Logo className="w-9 h-9 transition-transform group-hover:scale-110" />
+              <span>Pothole.io</span>
             </Link>
             {/* Authenticated Navigation */}
             {user && (
@@ -80,7 +80,7 @@ export function HomePage() {
                   <Link
                     key={item.to}
                     to={item.to}
-                    className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                    className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors uppercase tracking-wider"
                   >
                     {item.label}
                   </Link>
@@ -88,26 +88,31 @@ export function HomePage() {
               </div>
             )}
 
-            <div className="flex items-center gap-4">
+            <div className="ml-auto flex items-center gap-4 sm:ml-0">
               <ThemeToggle />
               {!user ? (
-                <>
-                  <Link to="/login">
-                    <Button variant="ghost" className="hidden sm:inline-flex text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400">Sign In</Button>
-                  </Link>
-                  <Link to="/login">
-                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 rounded-full px-6">Get Started</Button>
-                  </Link>
-                </>
-              ) : (
                 <div className="flex items-center gap-4">
-                  <span className="hidden lg:inline text-sm font-medium text-slate-900 dark:text-white">
-                    Hi, {user.name || 'User'}
+                  <Link
+                    to="/login"
+                    className="hidden h-10 items-center rounded-full px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white sm:inline-flex"
+                  >
+                    Sign In
+                  </Link>
+                  <Link to="/login">
+                    <Button className="h-10 rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 hover:bg-emerald-700 active:scale-95 sm:px-6">
+                      Get Started
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <span className="hidden lg:inline text-sm font-semibold text-slate-900 dark:text-white">
+                    Hi, {user.name?.split(' ')[0] || 'User'}
                   </span>
                   <Button
                     variant="ghost"
                     onClick={handleLogout}
-                    className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm h-9 px-3"
                   >
                     Logout
                   </Button>

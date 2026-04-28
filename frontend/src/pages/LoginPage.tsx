@@ -5,7 +5,7 @@ import { ThemeToggle } from '../components/ThemeToggle'
 import { Target, Loader2, ArrowLeft } from 'lucide-react'
 
 export const LoginPage = () => {
-  const { signIn, verifyEmail, resendOtp, signInWithGoogle } = useAuth()
+  const { signIn, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
   
   const [email, setEmail] = useState('')
@@ -13,10 +13,6 @@ export const LoginPage = () => {
   
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
-  // Verification step state (in case account is unverified)
-  const [showVerification, setShowVerification] = useState(false)
-  const [otp, setOtp] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,11 +22,8 @@ export const LoginPage = () => {
     try {
       const result = await signIn(email, password)
       
-      // If error indicates unverified, transition to verify UI and resend OTP
       if (result.error && result.error.toLowerCase().includes('verif')) {
-         setError('Your email is not verified yet. We just sent a new code!')
-         await resendOtp(email)
-         setShowVerification(true)
+         setError('Your email is not verified yet. Complete the verification email from Neon, then try signing in again.')
       } else if (result.error) {
         setError(result.error)
       } else {
@@ -38,37 +31,10 @@ export const LoginPage = () => {
       }
     } catch (err: any) {
       if (err?.message?.toLowerCase().includes('verif')) {
-         setError('Your email is not verified yet. We just sent a new code!')
-         await resendOtp(email)
-         setShowVerification(true)
+         setError('Your email is not verified yet. Complete the verification email from Neon, then try signing in again.')
       } else {
          setError(err?.message || 'Login failed')
       }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleVerifySubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    
-    if (otp.length < 6) {
-      setError('Please enter a valid OTP code')
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const result = await verifyEmail(email, otp)
-      if (result.error) {
-        setError(result.error)
-      } else {
-        navigate('/prediction')
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Verification failed')
     } finally {
       setLoading(false)
     }
@@ -103,65 +69,6 @@ export const LoginPage = () => {
           <div className="bg-white/60 dark:bg-slate-900/70 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-2xl border border-white/80 dark:border-slate-700/50 p-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-white/10 dark:from-slate-800/40 dark:to-slate-900/0 pointer-events-none" />
             <div className="relative z-10">
-            
-            {showVerification ? (
-              <>
-                <button 
-                  onClick={() => setShowVerification(false)}
-                  className="mb-6 flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
-                >
-                  <ArrowLeft size={16} className="mr-1" /> Back
-                </button>
-                
-                <div className="text-center mb-8">
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Verify your account</h1>
-                  <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">
-                    We've sent a code to <span className="font-semibold">{email}</span>
-                  </p>
-                </div>
-
-                {error && (
-                  <div className="mb-6 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm">
-                    {error}
-                  </div>
-                )}
-
-                <form onSubmit={handleVerifySubmit} className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex justify-center">Enter Code</label>
-                    <input
-                      type="text"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      required
-                      maxLength={6}
-                      placeholder="123456"
-                      className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-transparent transition-all text-center text-2xl tracking-widest font-mono"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-                  >
-                    {loading ? (
-                      <><Loader2 size={18} className="animate-spin" /> Verifying...</>
-                    ) : (
-                      'Verify & Login'
-                    )}
-                  </button>
-                  
-                  <button
-                    type="button"
-                    onClick={() => resendOtp(email)}
-                    className="w-full mt-2 py-2 text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                  >
-                    Didn't get a code? Resend
-                  </button>
-                </form>
-              </>
-            ) : (
               <>
                 <div className="text-center mb-6">
                   <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Welcome back</h1>
@@ -254,7 +161,6 @@ export const LoginPage = () => {
                   </Link>
                 </p>
               </>
-            )}
             </div>
           </div>
         </div>

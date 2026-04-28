@@ -16,8 +16,6 @@ interface AuthContextValue {
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error?: string }>
   signUp: (name: string, email: string, password: string) => Promise<{ error?: string }>
-  verifyEmail: (email: string, otp: string) => Promise<{ error?: string }>
-  resendOtp: (email: string) => Promise<{ error?: string }>
   signInWithGoogle: () => void
   signOut: () => Promise<void>
 }
@@ -27,8 +25,6 @@ const AuthContext = createContext<AuthContextValue>({
   loading: true,
   signIn: async () => ({}),
   signUp: async () => ({}),
-  verifyEmail: async () => ({}),
-  resendOtp: async () => ({}),
   signInWithGoogle: () => {},
   signOut: async () => {},
 })
@@ -92,31 +88,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
-  const verifyEmail = async (email: string, otp: string) => {
-    try {
-      const result = await neonClient.auth.emailOtp.verifyEmail({ email, otp })
-      if (result.error) {
-        return { error: result.error.message || 'Verification failed' }
-      }
-      await checkSession()
-      return {}
-    } catch (err: any) {
-      return { error: err?.message || 'Verification failed' }
-    }
-  }
-
-  const resendOtp = async (email: string) => {
-    try {
-      const result = await neonClient.auth.emailOtp.sendVerificationOtp({ email, type: "email-verification" })
-      if (result?.error) {
-        return { error: result.error.message || 'Failed to send OTP' }
-      }
-      return {}
-    } catch (err: any) {
-      return { error: err?.message || 'Failed to send OTP' }
-    }
-  }
-
   const signInWithGoogle = async () => {
     try {
       await neonClient.auth.signIn.social({
@@ -140,7 +111,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, verifyEmail, resendOtp, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   )
