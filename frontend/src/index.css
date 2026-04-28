@@ -24,7 +24,7 @@
     @apply relative overflow-hidden transition-all duration-300 active:scale-[0.98];
   }
 
-  /* FIXED: no opacity classes, no arbitrary shadow in @apply */
+  /* FIXED: no opacity + no arbitrary shadow in @apply */
   .card-premium {
     @apply bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 backdrop-blur-sm transition-all duration-300;
     opacity: 0.92;
@@ -35,7 +35,7 @@
     box-shadow: 0 16px 36px rgba(2, 6, 23, 0.36);
   }
 
-  /* FIXED: replaced Tailwind opacity + shadow with pure CSS */
+  /* FIXED: replaced Tailwind opacity + shadow */
   .glass-premium {
     @apply backdrop-blur-xl border;
     background-color: rgba(255, 255, 255, 0.7);
@@ -44,12 +44,11 @@
 
   .dark .glass-premium {
     background-color: rgba(15, 23, 42, 0.7);
-    /* slate-900 */
     box-shadow: 0 18px 40px rgba(2, 6, 23, 0.34);
   }
 
   .hover-lift {
-    @apply transition-[transform, box-shadow, border-color] duration-300 ease-out motion-safe:hover:-translate-y-1;
+    @apply transition-all duration-300 ease-out motion-safe:hover:-translate-y-1;
   }
 
   .soft-grid {
