@@ -3,10 +3,14 @@
 > **AI-Powered Civic Infrastructure Reporting System**
 > 
 > A comprehensive web application that enables citizens to report potholes, track repairs, and engage with a community of civic workers using advanced AI detection and intelligent assistance.
-
+## [Preview](https://pothole-io.vercel.app/)
 ---
+<<<<<<< HEAD
 
 ## Overview
+=======
+## ✨ Overview
+>>>>>>> 0af658f2d49595070303d6c393337b00419be0fb
 
 **Pothole Segmentation** is a full-stack civic tech platform that combines:
 - **AI Computer Vision** - YOLO v8 for automatic pothole detection
@@ -370,6 +374,48 @@ This platform demonstrates:
 - Scalable cloud architecture
 - Professional UI/UX practices
 - Production-ready code quality
+
+---
+<h2>👤 Author</h2>
+
+<div align="center">
+
+<div style="
+  max-width:650px;
+  padding:40px 30px;
+  border-radius:16px;
+  background:linear-gradient(135deg,#0f172a,#1e293b);
+  color:white;
+  box-shadow:0 10px 30px rgba(0,0,0,0.25);
+">
+
+<h2 style="margin:0;">Musa Qureshi</h2>
+
+<p style="margin:8px 0 16px 0; font-size:14px; opacity:0.9;">
+Agentic AI Developer • ML Engineer • SaaS Builder
+</p>
+
+<p style="font-size:14px; opacity:0.8;">
+Building AI agents, automation systems, and scalable web apps that solve real-world problems.
+</p>
+
+<br/>
+
+<a href="https://www.linkedin.com/in/musa-qureshi">
+  <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white"/>
+</a>
+
+<a href="https://x.com/musa_qureshi_01">
+  <img src="https://img.shields.io/badge/X-000000?style=for-the-badge&logo=x&logoColor=white"/>
+</a>
+
+<a href="https://peerlist.io/musa-qureshi">
+  <img src="https://img.shields.io/badge/Peerlist-00AA45?style=for-the-badge&logo=peerlist&logoColor=white"/>
+</a>
+
+</div>
+
+</div>
 
 ---
 
