@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ThemeToggle } from './ThemeToggle'
 import { Logo } from './ui/Logo'
-import { useAuth } from '../context/SupabaseAuthContext'
+import { useAuth } from '../context/NeonAuthContext'
 
 const nav = [
   { to: '/', label: 'Home' },
@@ -38,7 +38,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1">
             {nav.map(({ to, label }) => {
               const active = location.pathname === to;
               return (
@@ -69,7 +69,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               aria-label="Menu"
-              className="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="lg:hidden p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               onClick={() => setMobileOpen((o) => !o)}
             >
               {mobileOpen ? (
@@ -93,7 +93,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className="md:hidden overflow-hidden border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+              className="lg:hidden overflow-hidden border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
             >
               <nav className="px-4 py-3 flex flex-col gap-1">
                 {nav.map(({ to, label }) => {

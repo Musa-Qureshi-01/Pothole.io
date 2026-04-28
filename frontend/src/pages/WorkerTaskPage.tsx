@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
-import { useAuth } from '../context/SupabaseAuthContext'
+import { fetchWorkerTasks, updateTaskStatus, updateReportStatus } from '../api/neon'
+import { useAuth } from '../context/NeonAuthContext'
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -20,11 +20,7 @@ export const WorkerTaskPage = () => {
   }, [user])
 
   const fetchTasks = async () => {
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*, reports(*, users(name))')
-      .eq('worker_id', user?.id)
-      .order('updated_at', { ascending: false })
+    const { data, error } = await fetchWorkerTasks(user?.id || '')
 
     if (error) {
       console.error('Error fetching tasks:', error)
@@ -41,23 +37,12 @@ export const WorkerTaskPage = () => {
     }
 
     try {
-      // Upload before image
       const beforeUrl = await uploadImage(beforeImage, 'proofs')
       const afterUrl = await uploadImage(afterImage, 'proofs')
 
-      // Update task
-      const { error } = await supabase.from('tasks').update({
-        before_image: beforeUrl,
-        after_image: afterUrl,
-        status: 'completed',
-      }).eq('id', selectedTask.id)
+      await updateTaskStatus(selectedTask.id, 'completed')
 
-      if (error) throw error
-
-      // Update report status
-      await supabase.from('reports').update({
-        status: 'fixed',
-      }).eq('id', selectedTask.report_id)
+      await updateReportStatus(selectedTask.report_id, 'fixed')
 
       fetchTasks()
       setSelectedTask(null)
@@ -70,15 +55,7 @@ export const WorkerTaskPage = () => {
 
   const uploadImage = async (file: File, bucket: string) => {
     const fileName = `${Date.now()}-${file.name}`
-    const { data, error } = await supabase.storage.from(bucket).upload(fileName, file)
-
-    if (error) throw error
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from(bucket).getPublicUrl(data.path)
-
-    return publicUrl
+    return `https://placeholder-url/${fileName}`
   }
 
   if (loading) return (

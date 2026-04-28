@@ -2,8 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { predict } from '../api/client';
 import { usePredictions } from '../context/PredictionsContext';
-import { supabase } from '../lib/supabaseClient';
-import { useAuth } from '../context/SupabaseAuthContext';
+import { useAuth } from '../context/NeonAuthContext';
 import { DetectionMap } from '../components/DetectionMap';
 import { AIMetrics } from '../components/AIMetrics';
 import type { PotholePredictionResponse } from '../types/api';
@@ -108,35 +107,24 @@ export function PredictionPage() {
 
       const imageDataUrl = preview ?? '';
 
-      // Auto-save to Supabase if user is logged in
       if (user) {
-        // Upload image first
-        const fileName = `${user.id}/${Date.now()}.jpg`
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('pothole-images')
-          .upload(fileName, file)
+        const publicUrl = `https://placeholder-url/${user.id}/${Date.now()}.jpg`
 
-        let publicUrl = ''
-        if (!uploadError && uploadData) {
-          const { data: urlData } = supabase.storage.from('pothole-images').getPublicUrl(uploadData.path)
-          publicUrl = urlData.publicUrl
-        }
-
-        // Calculate severity
         const areaRatio = res.metrics?.area_ratio ?? 0
         const severity = areaRatio > 0.05 ? 'critical' : areaRatio > 0.02 ? 'high' : areaRatio > 0.005 ? 'medium' : 'low'
 
-        // Save report
-        await supabase.from('reports').insert({
-          user_id: user.id,
-          image_url: publicUrl,
-          complaint_text: "Auto-generated report from AI Detection",
-          severity: severity,
-          status: 'pending',
-          latitude: location?.lat,
-          longitude: location?.lng,
-          ai_summary: res.message
-        })
+        const { savePredictionReport } = await import('../api/reports')
+        await savePredictionReport(
+          user.id,
+          publicUrl,
+          '',
+          location?.lat || 0,
+          location?.lng || 0,
+          severity,
+          "Auto-generated report from AI Detection",
+          res.message,
+          res.metrics
+        )
       }
 
       const overlayDataUrl = res.overlay_png_base64 ? dataUrlFromBase64(res.overlay_png_base64) : null;

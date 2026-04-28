@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/SupabaseAuthContext'
+import { useAuth } from '../context/NeonAuthContext'
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { getUserById } from '../api/neon'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -21,12 +21,7 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
       }
 
       try {
-        const { data } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', user.id)
-          .single()
-
+        const { data } = await getUserById(user.id)
         setUserRole(data?.role || null)
       } catch (error) {
         console.error('Error fetching user role:', error)

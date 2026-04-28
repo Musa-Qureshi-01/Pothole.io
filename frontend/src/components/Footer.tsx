@@ -42,21 +42,21 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="mt-32 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 transition-colors duration-300">
+    <footer className="w-full bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 transition-colors duration-300">
       {/* Main footer content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-20">
         {/* Top section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-x-6 gap-y-10 lg:gap-8 mb-12">
           {/* Brand & description */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="lg:col-span-3"
+            className="col-span-2 md:col-span-4 lg:col-span-4"
           >
             <Link to="/" className="inline-block mb-4">
               <span className="text-2xl font-black bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-                Pothole AI
+                RoadWatch
               </span>
             </Link>
             <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed text-sm">
@@ -89,12 +89,12 @@ export function Footer() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.05 }}
-            className="lg:col-span-2"
+            className="col-span-1 md:col-span-1 lg:col-span-2"
           >
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-6">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 sm:mb-6">
               Product
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2 sm:space-y-3">
               {PRODUCT_LINKS.map((link) => (
                 <li key={link.to}>
                   <Link
@@ -115,12 +115,12 @@ export function Footer() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="lg:col-span-2"
+            className="col-span-1 md:col-span-1 lg:col-span-2"
           >
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-6">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 sm:mb-6">
               Company
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2 sm:space-y-3">
               {COMPANY_LINKS.map((link) => (
                 <li key={link.label}>
                   <a
@@ -141,12 +141,12 @@ export function Footer() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.15 }}
-            className="lg:col-span-2"
+            className="col-span-1 md:col-span-1 lg:col-span-2"
           >
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-6">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 sm:mb-6">
               Resources
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2 sm:space-y-3">
               {RESOURCES_LINKS.map((link) => (
                 <li key={link.label}>
                   <a
@@ -167,9 +167,9 @@ export function Footer() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="lg:col-span-2"
+            className="col-span-2 sm:col-span-1 md:col-span-1 lg:col-span-2"
           >
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-6">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 sm:mb-6">
               Contact
             </h3>
             <ul className="space-y-4">
@@ -209,7 +209,7 @@ export function Footer() {
         >
           <div className="text-sm text-slate-600 dark:text-slate-400">
             <p>© {currentYear} Musa. All rights reserved.</p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">Built with ❤️ for civic infrastructure.</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">Built with care for civic infrastructure.</p>
           </div>
 
           {/* Legal Links */}

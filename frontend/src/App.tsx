@@ -1,13 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
 import { PredictionsProvider } from './context/PredictionsContext'
 import { Layout } from './components/Layout'
 import { Chatbot } from './components/ChatBot'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { Footer } from './components/Footer'
-import { useAuth } from './context/SupabaseAuthContext'
+import { useAuth } from './context/NeonAuthContext'
 
-// Lazy load pages for performance
 const HomePage = lazy(() => import('./pages/HomePage').then(module => ({ default: module.HomePage })))
 const PredictionPage = lazy(() => import('./pages/PredictionPage').then(module => ({ default: module.PredictionPage })))
 const ReportPage = lazy(() => import('./pages/ReportPage').then(module => ({ default: module.ReportPage })))
@@ -19,7 +18,6 @@ const SignupPage = lazy(() => import('./pages/SignupPage').then(module => ({ def
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(module => ({ default: module.AdminDashboard })))
 const WorkerTaskPage = lazy(() => import('./pages/WorkerTaskPage').then(module => ({ default: module.WorkerTaskPage })))
 
-// Loading Component
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh] w-full">
     <div className="flex flex-col items-center">
@@ -45,93 +43,90 @@ export default function App() {
 
   return (
     <PredictionsProvider>
-      <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
-          {user ? (
-            <>
-              <Chatbot />
-              <Routes>
-                {/* Home Page: Full width, no Layout wrapper */}
-                <Route path="/" element={<HomePage />} />
-
-                {/* Dashboard Pages: Wrapped in Layout */}
-                <Route
-                  path="/*"
-                  element={
-                    <Layout>
-                      <Suspense fallback={<PageLoader />}>
-                        <Routes>
-                          <Route
-                            path="/prediction"
-                            element={
-                              <ProtectedRoute>
-                                <PredictionPage />
-                              </ProtectedRoute>
-                            }
-                          />
-                          <Route
-                            path="/report"
-                            element={
-                              <ProtectedRoute>
-                                <ReportPage />
-                              </ProtectedRoute>
-                            }
-                          />
-                          <Route
-                            path="/leaderboard"
-                            element={
-                              <ProtectedRoute>
-                                <LeaderboardPage />
-                              </ProtectedRoute>
-                            }
-                          />
-                          <Route
-                            path="/profile"
-                            element={
-                              <ProtectedRoute>
-                                <ProfilePage />
-                              </ProtectedRoute>
-                            }
-                          />
-                          <Route
-                            path="/admin"
-                            element={
-                              <ProtectedRoute requiredRole="admin">
-                                <AdminDashboard />
-                              </ProtectedRoute>
-                            }
-                          />
-                          <Route
-                            path="/worker"
-                            element={
-                              <ProtectedRoute requiredRole="worker">
-                                <WorkerTaskPage />
-                              </ProtectedRoute>
-                            }
-                          />
-                          <Route path="/contact" element={<ContactPage />} />
-                          {/* Redirect login/signup to dashboard if already logged in */}
-                          <Route path="/signup" element={<Navigate to="/prediction" />} />
-                          {/* Catch-all for dashboard routes */}
-                          <Route path="*" element={<Navigate to="/prediction" />} />
-                        </Routes>
-                      </Suspense>
-                    </Layout>
-                  }
-                />
-              </Routes>
-            </>
-          ) : (
+      <Suspense fallback={<PageLoader />}>
+        {user ? (
+          <>
+            <Chatbot />
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="*" element={<Navigate to="/" />} />
+
+              <Route
+                path="/*"
+                element={
+                  <Layout>
+                    <Suspense fallback={<PageLoader />}>
+                      <Routes>
+                        <Route
+                          path="/prediction"
+                          element={
+                            <ProtectedRoute>
+                              <PredictionPage />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/report"
+                          element={
+                            <ProtectedRoute>
+                              <ReportPage />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/leaderboard"
+                          element={
+                            <ProtectedRoute>
+                              <LeaderboardPage />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/profile"
+                          element={
+                            <ProtectedRoute>
+                              <ProfilePage />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <AdminDashboard />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/worker"
+                          element={
+                            <ProtectedRoute requiredRole="worker">
+                              <WorkerTaskPage />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route path="/contact" element={<ContactPage />} />
+                        {/* Redirect login/signup to dashboard if already logged in */}
+                        <Route path="/signup" element={<Navigate to="/prediction" />} />
+                        {/* Catch-all for dashboard routes */}
+                        <Route path="*" element={<Navigate to="/prediction" />} />
+                      </Routes>
+                    </Suspense>
+                  </Layout>
+                }
+              />
             </Routes>
-          )}
-          <Footer />
-        </Suspense>
-      </BrowserRouter>
+          </>
+        ) : (
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        )}
+        <Footer />
+      </Suspense>
     </PredictionsProvider>
   )
 }

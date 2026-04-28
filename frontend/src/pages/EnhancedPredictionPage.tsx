@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { PredictionPage as OriginalPredictionPage } from './PredictionPage'
-import { useAuth } from '../context/SupabaseAuthContext'
+import { useAuth } from '../context/NeonAuthContext'
 import { savePredictionReport, uploadImage, updateLeaderboard } from '../api/reports'
 import { generateAIReport } from '../lib/gemini'
 

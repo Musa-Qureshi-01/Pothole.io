@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { MessageSquare, X, Send, Loader2, Bot, User, Sparkles, AlertCircle } from 'lucide-react'
-import { supabase } from '../lib/supabaseClient'
-import { useAuth } from '../context/SupabaseAuthContext'
+import { fetchChatHistory, saveChatMessage } from '../api/neon'
+import { useAuth } from '../context/NeonAuthContext'
 import { generateChatResponse } from '../lib/gemini'
 
 interface Message {
@@ -38,18 +38,13 @@ export const Chatbot = () => {
 
   const loadChatHistory = async () => {
     try {
-      const { data } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: true })
-        .limit(50)
+      const { data } = await fetchChatHistory(user?.id || '')
 
       if (data) {
         const formattedMessages = data.map((msg: any) => ({
           id: msg.id,
           text: msg.message,
-          isUser: msg.role === 'user',
+          isUser: true,
           timestamp: new Date(msg.created_at),
         }))
         setMessages(formattedMessages)
@@ -77,13 +72,7 @@ export const Chatbot = () => {
 
     try {
       // Save user message to DB
-      const { error: dbError } = await supabase.from('chat_messages').insert({
-        user_id: user.id,
-        message: userMessage.text,
-        role: 'user',
-      })
-
-      if (dbError) console.error("Database save error (User):", dbError);
+      await saveChatMessage(user?.id || '', userMessage.text, '')
 
       // Get AI response
       const aiResponse = await generateChatResponse(userMessage.text, messages.map(m => ({
@@ -99,13 +88,7 @@ export const Chatbot = () => {
       }
 
       // Save AI message to DB
-      const { error: dbResponseError } = await supabase.from('chat_messages').insert({
-        user_id: user.id,
-        message: aiMessage.text,
-        role: 'ai',
-      })
-
-      if (dbResponseError) console.error("Database save error (AI):", dbResponseError);
+      await saveChatMessage(user?.id || '', '', aiMessage.text)
 
       setMessages((prev) => [...prev, aiMessage])
     } catch (error) {

@@ -6,36 +6,37 @@
 
 ---
 
-## ✨ Overview
+## Overview
 
 **Pothole Segmentation** is a full-stack civic tech platform that combines:
-- 🤖 **AI Computer Vision** - YOLO v8 for automatic pothole detection
-- 🎯 **Smart Reporting** - Google Gemini API for intelligent analysis
-- 💬 **24/7 AI Assistant** - Conversational chatbot for user guidance
-- 🔐 **Role-Based Access** - Three-tier user system (citizen/worker/admin)
-- 📊 **Real-Time Dashboard** - Leaderboard, task management, and analytics
-- 🌐 **Supabase Backend** - PostgreSQL with real-time subscriptions
+- **AI Computer Vision** - YOLO v8 for automatic pothole detection
+- **Smart Reporting** - Google Gemini API for intelligent analysis
+- **24/7 AI Assistant** - Conversational chatbot for user guidance
+- **Role-Based Access** - Three-tier user system (citizen/worker/admin)
+- **Real-Time Dashboard** - Leaderboard, task management, and analytics
+- **NeonDB Backend** - PostgreSQL with Data API
+- **Clerk Authentication** - Production-ready auth service
 
 **Perfect for:** City governments, municipal departments, and civic engagement platforms.
 
 ---
 
-## 🎯 Key Features
+## Key Features
 
-### For Citizens 👥
+### For Citizens
 - **Easy Reporting** - Submit pothole photos with AI-powered severity assessment
 - **Track Status** - Follow your reported potholes from submission to repair
 - **Leaderboard** - Earn points and rank in your city's contribution list
 - **AI Assistant** - 24/7 chatbot for reporting help and app guidance
 - **Profile** - View your submission stats and impact metrics
 
-### For Workers 🔧
+### For Workers
 - **Task Management** - Receive and manage repair assignments
 - **Progress Tracking** - Update status and upload proof photos
 - **Priority Queue** - Focus on critical potholes first
 - **Team Coordination** - See what others are working on
 
-### For Administrators 👨‍💼
+### For Administrators
 - **Dashboard Analytics** - View trends, completion rates, and impact metrics
 - **User Management** - Manage roles and permissions
 - **Task Assignment** - Distribute work to field teams efficiently
@@ -43,7 +44,7 @@
 
 ---
 
-## 🚀 Technology Stack
+## Technology Stack
 
 ### Frontend
 - **React 19** - Modern UI framework with TypeScript
@@ -51,38 +52,40 @@
 - **Vite** - Lightning-fast build tool
 - **React Router** - Client-side navigation
 - **Framer Motion** - Smooth animations and transitions
-- **Supabase JS Client** - Real-time database integration
+- **Clerk** - Production-ready authentication
+- **Neon Data API** - PostgreSQL database integration
 - **Axios** - HTTP client for API calls
 
 ### Backend
 - **FastAPI** - Modern Python web framework
 - **ONNX Runtime** - YOLOv8 model inference (14.7MB)
-- **Supabase** - PostgreSQL database with Auth
+- **NeonDB** - PostgreSQL database
 - **Google Gemini 1.5 Flash** - AI report generation & chatbot
 
 ### Infrastructure
-- **Supabase** - Database, Auth, Storage, Real-time
+- **NeonDB** - PostgreSQL database with Data API
+- **Clerk** - Authentication service
 - **Google Cloud** - Gemini API
 - **Uvicorn** - ASGI server
 
 ---
 
-## 📋 Implementation Status
+## Implementation Status
 
 | Feature | Status | Details |
 |---------|--------|---------|
-| 🏠 Public Landing Page | ✅ Complete | Homepage accessible without login |
-| 🔐 Authentication | ✅ Complete | Email/password with session persistence |
-| 👥 Role-Based Access | ✅ Complete | 3 roles: citizen, worker, admin |
-| 👤 User Profiles | ✅ Complete | Real-time data from database |
-| 🤖 AI Chatbot | ✅ Complete | Gemini-powered 24/7 assistant |
-| 📝 Report Generation | ✅ Complete | AI-powered analysis & summarization |
-| 📊 Leaderboard | ✅ Complete | Real-time rankings & scoring |
-| 🎨 Dark Mode | ✅ Complete | System-wide theme support |
+| Public Landing Page | Complete | Homepage accessible without login |
+| Authentication | Complete | Email/password with session persistence |
+| Role-Based Access | Complete | 3 roles: citizen, worker, admin |
+| User Profiles | Complete | Real-time data from database |
+| AI Chatbot | Complete | Gemini-powered 24/7 assistant |
+| Report Generation | Complete | AI-powered analysis & summarization |
+| Leaderboard | Complete | Real-time rankings & scoring |
+| Dark Mode | Complete | System-wide theme support |
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 Pothole-Segmentation/
@@ -91,7 +94,7 @@ Pothole-Segmentation/
 │   │   ├── pages/           # Route pages
 │   │   ├── components/      # Reusable components
 │   │   ├── context/         # Auth & state management
-│   │   ├── lib/             # Gemini API, Supabase client
+│   │   ├── lib/             # Gemini API, Neon Data API client
 │   │   └── types/           # TypeScript definitions
 │   └── index.html
 │
@@ -99,29 +102,28 @@ Pothole-Segmentation/
 │   ├── app/
 │   │   ├── api/             # API endpoints
 │   │   ├── core/            # AI model inference
-│   │   ├── services/        # Business logic
-│   │   └── config/          # Settings
+│   │   └── main.py
 │   ├── models/              # YOLO v8 (best.onnx)
-│   └── main.py
-│
-├── shared/                   # Shared utilities
-│   └── schemas/             # Database schemas
+│   └── neon_schema.sql      # NeonDB database schema
 │
 ├── docs/                     # Detailed documentation
+│   ├── MIGRATION_SUMMARY.md  # Supabase to NeonDB migration
 │   ├── QUICKSTART.md        # Testing & deployment guide
 │   ├── IMPLEMENTATION_COMPLETE.md
 │   └── DATABASE_SCHEMA.md
 │
+├── env.example              # Environment variable template
 └── README.md               # This file
 ```
 
 ---
 
-## 🎬 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Python 3.9+ and Node.js 18+
-- Supabase project with database initialized
+- NeonDB project with database initialized
+- Clerk account and application
 - Google Gemini API key
 
 ### Setup (3 minutes)
@@ -144,16 +146,16 @@ npm install
 
 Create `frontend/.env.local`:
 ```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_ZW5nYWdlZC10YXBpci03MS5jbGVyay5hY2NvdW50cy5kZXYk
+VITE_NEON_API_URL=https://ep-ancient-pond-aoaofy0n.apirest.c-2.ap-southeast-1.aws.neon.tech/neondb/rest/v1
 VITE_GEMINI_API_KEY=your-gemini-key
 VITE_API_URL=http://127.0.0.1:8000
 ```
 
 Create `backend/.env`:
 ```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-service-key
+DATABASE_URL=postgresql://username:password@ep-ancient-pond-aoaofy0n.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+CORS_ORIGINS=http://localhost:5174,http://localhost:3000
 ```
 
 **3. Run Servers**
@@ -176,11 +178,11 @@ npm run dev
 - Submit reports, chat with AI, view leaderboard
 - Login with different roles to test access control
 
-📖 **[View Full Quick Start Guide →](docs/QUICKSTART.md)**
+**[View Full Quick Start Guide](docs/QUICKSTART.md)**
 
 ---
 
-## 📊 Database Schema
+## Database Schema
 
 **5 Core Tables:**
 
@@ -192,16 +194,14 @@ npm run dev
 | `chat_messages` | Conversation history | User-bot interactions |
 | `tasks` | Worker assignments | Repair jobs, deadlines |
 
-**3 Storage Buckets:**
-- `reports` - Pothole images
-- `proofs` - Proof of repair
-- `avatars` - User profile pictures
+**Storage:**
+- Image storage to be implemented (Cloudflare R2 recommended)
 
-📖 **[View Full Database Schema →](docs/DATABASE_SCHEMA.md)**
+**[View Full Database Schema](docs/DATABASE_SCHEMA.md)**
 
 ---
 
-## 🎮 Usage Examples
+## Usage Examples
 
 ### Sign Up & Create Account
 ```bash
@@ -223,7 +223,7 @@ npm run dev
 
 ### Chat with AI Assistant
 ```bash
-1. Click 💬 button (bottom-right)
+1. Click chat button (bottom-right)
 2. Ask about reporting, tracking, or app features
 3. Conversation saved to database
 4. History loads on next chat
@@ -238,7 +238,7 @@ Admin:       + Can view dashboard, manage users, assign work
 
 ---
 
-## 🔑 Key Endpoints
+## Key Endpoints
 
 ### Frontend Routes
 - `/` - Public homepage
@@ -263,40 +263,40 @@ GET  /api/leaderboard     # Get rankings
 
 ---
 
-## 🔐 Security
+## Security
 
-✅ **Authentication**
-- Supabase Auth (email/password)
+**Authentication**
+- Clerk Authentication (email/password, social logins)
 - JWT session tokens
 - Auto-logout on token expiration
 
-✅ **Authorization**
+**Authorization**
 - Role-based access control (RBAC)
 - Database-backed role validation
 - Protected routes with proper redirects
 
-✅ **Database Security**
-- Row-level security (RLS) policies
+**Database Security**
+- PostgreSQL with secure connections
 - User can only access own data
 - Admins can manage all data
 
-✅ **API Security**
+**API Security**
 - CORS configured
-- Rate limiting on auth endpoints
 - Secure environment variables
+- Clerk's built-in security features
 
 ---
 
-## 📈 Performance
+## Performance
 
-- ⚡ **Vite** - Sub-second hot module replacement
-- 🎯 **ONNX Model** - 14.7MB lightweight inference
-- 🚀 **Real-time** - Supabase subscriptions for live updates
-- 📦 **Bundle** - Optimized production build (~500KB gzip)
+- **Vite** - Sub-second hot module replacement
+- **ONNX Model** - 14.7MB lightweight inference
+- **Neon Data API** - Fast PostgreSQL queries
+- **Bundle** - Optimized production build (~500KB gzip)
 
 ---
 
-## 🚀 Deployment
+## Deployment
 
 ### Frontend (Vercel/Netlify)
 ```bash
@@ -310,22 +310,23 @@ pip install -r requirements.txt
 gunicorn app.main:app --workers 4
 ```
 
-### Database (Supabase)
+### Database (NeonDB)
 - Fully managed PostgreSQL
 - Auto-scaling, backups, point-in-time recovery
-- Real-time subscriptions built-in
+- Data API for serverless access
 
 ---
 
-## 📚 Documentation
+## Documentation
 
-- **[📖 Quick Start Guide](docs/QUICKSTART.md)** - How to test and deploy
-- **[🗄️ Database Schema](docs/DATABASE_SCHEMA.md)** - Tables, relationships, RLS
-- **[✅ Implementation Details](docs/IMPLEMENTATION_COMPLETE.md)** - Feature breakdown
+- **[Migration Summary](docs/MIGRATION_SUMMARY.md)** - Supabase to NeonDB migration guide
+- **[Quick Start Guide](docs/QUICKSTART.md)** - How to test and deploy
+- **[Database Schema](docs/DATABASE_SCHEMA.md)** - Tables, relationships
+- **[Implementation Details](docs/IMPLEMENTATION_COMPLETE.md)** - Feature breakdown
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Areas for enhancement:
 
@@ -339,19 +340,19 @@ Contributions are welcome! Areas for enhancement:
 
 ---
 
-## 📝 License
+## License
 
 This project is open source and available under the MIT License.
 
 ---
 
-## 🆘 Support
+## Support
 
 **Found an issue?**
-1. Check [docs/QUICKSTART.md](docs/QUICKSTART.md) troubleshooting section
-2. Verify environment variables
+1. Check [docs/MIGRATION_SUMMARY.md](docs/MIGRATION_SUMMARY.md) for migration details
+2. Verify environment variables (Clerk key, Neon API URL)
 3. Check browser console for errors
-4. Review Supabase dashboard for data issues
+4. Review NeonDB dashboard for data issues
 
 **Need help deploying?**
 - Follow deployment sections in Quick Start guide
@@ -360,24 +361,20 @@ This project is open source and available under the MIT License.
 
 ---
 
-## 🎯 Project Goals
+## Project Goals
 
 This platform demonstrates:
-- ✅ Full-stack AI/ML integration
-- ✅ Real-time database with React
-- ✅ Role-based security patterns
-- ✅ Scalable cloud architecture
-- ✅ Professional UI/UX practices
-- ✅ Production-ready code quality
-
-Perfect for portfolio, learning, or production use! 🎉
+- Full-stack AI/ML integration
+- Real-time database with React
+- Role-based security patterns
+- Scalable cloud architecture
+- Professional UI/UX practices
+- Production-ready code quality
 
 ---
 
 <div align="center">
 
-**Made with ❤️ for civic infrastructure**
-
-⭐ If you find this useful, please star the repo!
+**Made with care for civic infrastructure**
 
 </div>

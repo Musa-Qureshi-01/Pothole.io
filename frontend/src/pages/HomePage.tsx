@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { SlidingBrandBar } from '../components/SlidingBrandBar';
 
 import { ThemeToggle } from '../components/ThemeToggle';
-import { useAuth } from '../context/SupabaseAuthContext';
+import { useAuth } from '../context/NeonAuthContext';
 import { Button } from '../components/ui/Button';
 import { Logo } from '../components/ui/Logo';
 import { CheckCircle2, ArrowRight, Zap, Target, TrendingUp, Users, BarChart3, Globe, Shield, Award } from 'lucide-react';
@@ -75,7 +75,7 @@ export function HomePage() {
             </Link>
             {/* Authenticated Navigation */}
             {user && (
-              <div className="hidden md:flex items-center gap-6">
+              <div className="hidden lg:flex items-center gap-6">
                 {navItems.map((item) => (
                   <Link
                     key={item.to}
@@ -101,8 +101,8 @@ export function HomePage() {
                 </>
               ) : (
                 <div className="flex items-center gap-4">
-                  <span className="hidden sm:inline text-sm font-medium text-slate-900 dark:text-white">
-                    Hi, {user.user_metadata?.name || user.user_metadata?.full_name || 'User'}
+                  <span className="hidden lg:inline text-sm font-medium text-slate-900 dark:text-white">
+                    Hi, {user.name || 'User'}
                   </span>
                   <Button
                     variant="ghost"
@@ -365,7 +365,7 @@ export function HomePage() {
 
             {/* Content */}
             <div className="relative z-20">
-              <h2 className="text-4xl md:text-7xl font-black mb-8 tracking-tight text-white drop-shadow-sm">
+              <h2 className="text-4xl md:text-5xl lg:text-7xl font-black mb-8 tracking-tight text-white drop-shadow-sm">
                 Ready to make a difference?
               </h2>
               <p className="text-emerald-50 mb-12 text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed font-light">

@@ -1,42 +1,22 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { supabase } from '../lib/supabaseClient'
+import { fetchLeaderboard as fetchLeaderboardFromNeon } from '../api/neon'
 
 export const LeaderboardPage = () => {
   const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-
   useEffect(() => {
-    fetchLeaderboard()
-
-    // Subscribe to real-time updates
-    const subscription = supabase
-      .channel('leaderboard')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'leaderboard' }, () => {
-        fetchLeaderboard()
-      })
-      .subscribe()
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
-
-  const fetchLeaderboard = async () => {
-    const { data, error } = await supabase
-      .from('leaderboard')
-      .select('*, users(name, email)')
-      .order('score', { ascending: false })
-      .limit(50)
-
-    if (error) {
-      console.error('Error fetching leaderboard:', error)
-    } else {
+    const loadLeaderboard = async () => {
+      const { data } = await fetchLeaderboardFromNeon()
       setLeaderboard(data || [])
+      setLoading(false)
     }
-    setLoading(false)
-  }
+    loadLeaderboard()
+
+    const interval = setInterval(loadLeaderboard, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   if (loading) return <div className="text-center py-12">Loading leaderboard...</div>
 
@@ -71,11 +51,11 @@ export const LeaderboardPage = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center">
                       {index === 0 ? (
-                        <span className="text-2xl">🥇</span>
+                        <span className="font-bold text-yellow-500 text-lg">1st</span>
                       ) : index === 1 ? (
-                        <span className="text-2xl">🥈</span>
+                        <span className="font-bold text-slate-400 text-lg">2nd</span>
                       ) : index === 2 ? (
-                        <span className="text-2xl">🥉</span>
+                        <span className="font-bold text-amber-600 text-lg">3rd</span>
                       ) : (
                         <span className="font-semibold text-slate-600 dark:text-slate-400">#{index + 1}</span>
                       )}
