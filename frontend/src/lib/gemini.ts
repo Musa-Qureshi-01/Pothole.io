@@ -217,9 +217,9 @@ export const generateChatResponse = async (message: string, conversationHistory:
     return buildFallbackSupportResponse(message)
   }
 
-  const systemPrompt = `You are a helpful customer support agent for RoadWatch / Pothole AI, a platform for detecting and reporting road damage. 
-Your primary job is to help the user and solve their queries regarding the platform, how to report a pothole, how the AI detection works, and basic troubleshooting.
-If you are unable to answer or they need technical human assistance, politely inform them that you cannot help further and redirect them to the Contact Support page or tell them an administrator will follow up later. Keep your responses friendly, concise, and directly actionable.`
+  const systemPrompt = `You are a helpful customer support agent for Pothole.io. 
+Keep all your answers EXTREMELY short, sweet, and to the point (1-2 sentences max).
+If you cannot handle a request, or if the user needs technical assistance, immediately say: "I cannot help with that. Please forward your request to our Contact page so our team can assist you directly."`
 
   const messages = [
     { role: 'system', content: systemPrompt },

@@ -25,6 +25,7 @@ app = FastAPI(title="Pothole Segmentation API")
 # --- CORS: allow ONLY frontend origins ---
 DEFAULT_ORIGINS = [
     "https://pothole-io.vercel.app",
+    "https://pothole-io-git-main-musa-qureshi-01s-projects.vercel.app",
     "https://pothole-4ltew161q-musa-qureshi-01s-projects.vercel.app",
     "http://localhost:5173",
     "http://localhost:5174",
