@@ -8,7 +8,7 @@ import { Footer } from './components/Footer'
 import { useAuth } from './context/NeonAuthContext'
 
 const HomePage = lazy(() => import('./pages/HomePage').then(module => ({ default: module.HomePage })))
-const PredictionPage = lazy(() => import('./pages/PredictionPage').then(module => ({ default: module.PredictionPage })))
+const PredictionPage = lazy(() => import('./pages/EnhancedPredictionPage').then(module => ({ default: module.EnhancedPredictionPage })))
 const ReportPage = lazy(() => import('./pages/ReportPage').then(module => ({ default: module.ReportPage })))
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage').then(module => ({ default: module.LeaderboardPage })))
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then(module => ({ default: module.ProfilePage })))
@@ -17,6 +17,11 @@ const LoginPage = lazy(() => import('./pages/LoginPage').then(module => ({ defau
 const SignupPage = lazy(() => import('./pages/SignupPage').then(module => ({ default: module.SignupPage })))
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(module => ({ default: module.AdminDashboard })))
 const WorkerTaskPage = lazy(() => import('./pages/WorkerTaskPage').then(module => ({ default: module.WorkerTaskPage })))
+
+const AuthCallback = () => {
+  const { user } = useAuth()
+  return <Navigate to={user ? "/prediction" : "/login"} replace />
+}
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh] w-full">
@@ -105,6 +110,7 @@ export default function App() {
                           }
                         />
                         <Route path="/contact" element={<ContactPage />} />
+                        <Route path="/auth/callback" element={<AuthCallback />} />
                         {/* Redirect login/signup to dashboard if already logged in */}
                         <Route path="/signup" element={<Navigate to="/prediction" />} />
                         {/* Catch-all for dashboard routes */}
@@ -121,6 +127,7 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/contact" element={<Layout mode="public"><ContactPage /></Layout>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

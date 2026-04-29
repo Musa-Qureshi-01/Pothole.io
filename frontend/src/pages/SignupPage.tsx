@@ -1,55 +1,111 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/NeonAuthContext'
 import { neonClient } from '../lib/neonClient'
 import { ThemeToggle } from '../components/ThemeToggle'
-import { Target, Loader2, ArrowLeft } from 'lucide-react'
+import { Target, Loader2, ArrowLeft, ShieldCheck } from 'lucide-react'
 
 export const SignupPage = () => {
   const { signUp, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
-  
+
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
-  
+
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const [emailSent, setEmailSent] = useState(false)
+  const turnstileRef = useRef<HTMLDivElement>(null)
+  const turnstileWidgetId = useRef<string | null>(null)
+  const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+
+  // On localhost, auto-pass Turnstile (Cloudflare doesn't allow localhost domains)
+  useEffect(() => {
+    if (isLocalhost && siteKey) {
+      setTurnstileToken('localhost-bypass')
+      return
+    }
+    if (!siteKey || !turnstileRef.current) return
+
+    const renderWidget = () => {
+      if (turnstileRef.current && (window as any).turnstile) {
+        if (turnstileWidgetId.current) {
+          try { (window as any).turnstile.remove(turnstileWidgetId.current) } catch {}
+        }
+        turnstileWidgetId.current = (window as any).turnstile.render(turnstileRef.current, {
+          sitekey: siteKey,
+          callback: (token: string) => setTurnstileToken(token),
+          'error-callback': () => setTurnstileToken(''),
+          'expired-callback': () => setTurnstileToken(''),
+          theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+        })
+      }
+    }
+
+    if (!(window as any).turnstile) {
+      const script = document.createElement('script')
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad'
+      script.async = true
+      script.defer = true
+      ;(window as any).onTurnstileLoad = renderWidget
+      document.head.appendChild(script)
+    } else {
+      renderWidget()
+    }
+
+    return () => {
+      if (turnstileWidgetId.current) {
+        try { (window as any).turnstile.remove(turnstileWidgetId.current) } catch {}
+        turnstileWidgetId.current = null
+      }
+    }
+  }, [siteKey, isLocalhost])
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSuccess('')
 
     if (password.length < 8) {
       setError('Password must be at least 8 characters')
       return
     }
 
+    if (!turnstileToken) {
+      setError('Please complete the verification challenge')
+      return
+    }
+
     setLoading(true)
 
     try {
-      // Neon's Better Auth creates the user. We can update custom fields like phone through our DB endpoint after, but for now we just capture it.
       const result = await signUp(name, email, password)
-      
-      // If we had a direct DB hook here, we'd update the phone number in our users table
+
+      // Update phone number if provided
       if (!result.error && phone) {
         try {
-          // Attempting to patch the profile
           await neonClient.from('users').update({ phone }).eq('email', email)
-        } catch(e) {}
+        } catch (e) {
+          console.warn('Failed to update phone number:', e)
+        }
       }
 
       if (result.error) {
         if (result.error.toLowerCase().includes('already exist')) {
-           setError('Account with this email already exists. If not verified, try to log in to request a verification code.')
-        } else if (result.error.toLowerCase().includes('verif')) {
-           setError('Your account was created, but email verification is still required. Finish the Neon verification email, then sign in.')
+          setError('Account with this email already exists. Try signing in instead.')
         } else {
-           setError(result.error)
+          setError(result.error)
         }
+      } else if (result.needsVerification) {
+        setEmailSent(true)
       } else {
-        navigate('/prediction')
+        setSuccess('Account created successfully!')
+        setTimeout(() => navigate('/prediction'), 1500)
       }
     } catch (err: any) {
       setError(err?.message || 'Sign up failed')
@@ -87,18 +143,47 @@ export const SignupPage = () => {
           <div className="bg-white/60 dark:bg-slate-900/70 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-2xl border border-white/80 dark:border-slate-700/50 p-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-white/10 dark:from-slate-800/40 dark:to-slate-900/0 pointer-events-none" />
             <div className="relative z-10">
-              <>
-                <div className="text-center mb-6">
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Create an account</h1>
-                  <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">Get started with Pothole AI</p>
-                </div>
+              <div className="text-center mb-6">
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Create an account</h1>
+                <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">Get started with Pothole AI</p>
+              </div>
 
-                {error && (
-                  <div className="mb-6 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
-                    {error}
+              {error && (
+                <div className="mb-6 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+                  {error}
+                </div>
+              )}
+
+              {success && (
+                <div className="mb-6 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm">
+                  {success}
+                </div>
+              )}
+
+              {emailSent ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
                   </div>
-                )}
-                
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Check your email</h2>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm mb-1">
+                    We've sent a verification link to
+                  </p>
+                  <p className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm mb-4">{email}</p>
+                  <p className="text-slate-500 dark:text-slate-500 text-xs mb-6">
+                    Click the link in the email to verify your account, then sign in.
+                  </p>
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors"
+                  >
+                    Go to Sign In
+                  </Link>
+                </div>
+              ) : (
+              <>
                 <button
                   type="button"
                   onClick={signInWithGoogle}
@@ -124,87 +209,114 @@ export const SignupPage = () => {
                   </svg>
                   Sign up with Google
                 </button>
-                
-                <div className="relative mb-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white dark:bg-slate-900 text-slate-500">Or continue with</span>
-                  </div>
+
+              <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white dark:bg-slate-900 text-slate-500">Or continue with</span>
+                </div>
+              </div>
+
+              <form onSubmit={handleSignupSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Name</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    placeholder="Your name"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-transparent transition-all"
+                  />
                 </div>
 
-                <form onSubmit={handleSignupSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Name</label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                      placeholder="Your name"
-                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-transparent transition-all"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="you@example.com"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-transparent transition-all"
+                  />
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email</label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      placeholder="you@example.com"
-                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-transparent transition-all"
-                    />
-                  </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex justify-between">
+                     <span>Phone Number (India)</span>
+                     <span className="text-slate-400 font-normal">Optional</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => {
+                      // Allow only digits and spaces, max 10 digits
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 10)
+                      setPhone(value)
+                    }}
+                    placeholder="98765 43210"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-transparent transition-all"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">10-digit Indian mobile number</p>
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex justify-between">
-                       <span>Phone Number</span>
-                       <span className="text-slate-400 font-normal">Optional</span>
-                    </label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+1 (555) 000-0000"
-                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-transparent transition-all"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="At least 8 characters"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-transparent transition-all"
+                  />
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      placeholder="At least 8 characters"
-                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-transparent transition-all"
-                    />
-                  </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Human Verification</label>
+                  {isLocalhost && siteKey ? (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 flex items-center gap-3">
+                      <ShieldCheck size={20} className="text-blue-500" />
+                      <span className="text-sm text-blue-700 dark:text-blue-300">
+                        Turnstile bypassed on localhost (active on production)
+                      </span>
+                    </div>
+                  ) : siteKey ? (
+                    <div ref={turnstileRef} className="flex justify-center" />
+                  ) : (
+                    <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800 flex items-center gap-3">
+                      <ShieldCheck size={20} className="text-amber-500" />
+                      <span className="text-sm text-amber-700 dark:text-amber-300">
+                        VITE_TURNSTILE_SITE_KEY not configured in environment variables
+                      </span>
+                    </div>
+                  )}
+                </div>
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-                  >
-                    {loading ? (
-                      <><Loader2 size={18} className="animate-spin" /> Creating account...</>
-                    ) : (
-                      'Create Account'
-                    )}
-                  </button>
-                </form>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <><Loader2 size={18} className="animate-spin" /> Creating account...</>
+                  ) : (
+                    'Create Account'
+                  )}
+                </button>
+              </form>
 
-                <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-                  Already have an account?{' '}
-                  <Link to="/login" className="text-emerald-600 dark:text-emerald-400 font-medium hover:underline">
-                    Sign in
-                  </Link>
-                </p>
+              <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+                Already have an account?{' '}
+                <Link to="/login" className="text-emerald-600 dark:text-emerald-400 font-medium hover:underline">
+                  Sign in
+                </Link>
+              </p>
               </>
+            )}
             </div>
           </div>
         </div>

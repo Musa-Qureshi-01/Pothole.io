@@ -11,21 +11,40 @@ export const createUser = async (userData: { email: string; name: string; role: 
   }
 }
 
-export const getUserById = async (userId: string) => {
-  try {
-    const { data, error } = await neonClient.from('users').select('*').eq('id', userId)
-    if (error) return { data: null, error }
-    return { data: data?.[0] || null, error: null }
-  } catch (error) {
-    return { data: null, error }
-  }
-}
-
 export const updateUser = async (userId: string, updates: any) => {
   try {
     const { data, error } = await neonClient.from('users').update(updates).eq('id', userId).select()
     return { data, error }
   } catch (error) {
+    return { data: null, error }
+  }
+}
+
+export const getUserById = async (userId: string) => {
+  try {
+    const { data, error } = await neonClient.from('users').select('*').eq('id', userId)
+    if (error) {
+      console.warn('getUserById query error:', error)
+      return { data: null, error }
+    }
+    return { data: data?.[0] || null, error: null }
+  } catch (error: any) {
+    // Gracefully handle 404 (table not found) or other REST API errors
+    console.warn('getUserById failed (table may not exist):', error?.message || error)
+    return { data: null, error }
+  }
+}
+
+export const getUserByEmail = async (email: string) => {
+  try {
+    const { data, error } = await neonClient.from('users').select('*').eq('email', email)
+    if (error) {
+      console.warn('getUserByEmail query error:', error)
+      return { data: null, error }
+    }
+    return { data: data?.[0] || null, error: null }
+  } catch (error: any) {
+    console.warn('getUserByEmail failed (table may not exist):', error?.message || error)
     return { data: null, error }
   }
 }
@@ -88,6 +107,36 @@ export const updateReportStatus = async (reportId: string, status: string) => {
   try {
     const { data, error } = await neonClient.from('reports').update({ status }).eq('id', reportId).select()
     return { data, error }
+  } catch (error) {
+    return { data: null, error }
+  }
+}
+
+export const updateReport = async (reportId: string, updates: {
+  complaintText?: string
+  aiSummary?: string
+  severity?: string
+  metrics?: any
+  status?: string
+  latitude?: number | null
+  longitude?: number | null
+}) => {
+  try {
+    const payload: any = {}
+    if (updates.complaintText !== undefined) payload.complaint_text = updates.complaintText
+    if (updates.aiSummary !== undefined) payload.ai_summary = updates.aiSummary
+    if (updates.severity !== undefined) payload.severity = updates.severity
+    if (updates.metrics !== undefined) payload.metrics = updates.metrics
+    if (updates.status !== undefined) payload.status = updates.status
+    if (updates.latitude !== undefined) payload.latitude = updates.latitude
+    if (updates.longitude !== undefined) payload.longitude = updates.longitude
+
+    const { data, error } = await neonClient
+      .from('reports')
+      .update(payload)
+      .eq('id', reportId)
+      .select()
+    return { data: data?.[0] || null, error }
   } catch (error) {
     return { data: null, error }
   }

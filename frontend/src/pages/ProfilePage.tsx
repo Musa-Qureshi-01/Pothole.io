@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { getUserById, fetchUserReports, fetchLeaderboard } from '../api/neon'
+import { createUser, fetchLeaderboard, fetchUserReports, getUserByEmail, updateUser } from '../api/neon'
 import { useAuth } from '../context/NeonAuthContext'
-import { User, Mail, Calendar, FileText, CheckCircle, Trophy, Loader2, AlertCircle, BarChart, Edit2, Clock, Phone, AlignLeft, Camera } from 'lucide-react'
+import { User, Mail, Calendar, FileText, CheckCircle, Trophy, Loader2, AlertCircle, BarChart, Edit2, Clock, Phone, AlignLeft, Camera, Save, X } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
@@ -34,18 +34,30 @@ export const ProfilePage = () => {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [history, setHistory] = useState<any[]>([])
+  const [isEditing, setIsEditing] = useState(false)
+  const [editForm, setEditForm] = useState({ name: '', phone: '', bio: '' })
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (!user) return
 
     const fetchProfileData = async () => {
       try {
-        const { data: profileData } = await getUserById(user.id)
+        const { data: profileData } = await getUserByEmail(user.email)
+        const dbUserId =
+          profileData?.id ||
+          (await createUser({
+            email: user.email,
+            name: user.name || user.email.split('@')[0],
+            role: 'citizen',
+          }))?.data?.id ||
+          user.id
         
         // Merge Database profile with current Auth session 
         setProfile({
-          id: user.id,
+          id: dbUserId,
           name: profileData?.name || user.name || 'Citizen User',
           email: profileData?.email || user.email || 'No email attached',
           role: profileData?.role || 'citizen',
@@ -55,12 +67,12 @@ export const ProfilePage = () => {
           avatar_url: profileData?.avatar_url || user.image || ''
         })
 
-        const { data: reportsData } = await fetchUserReports(user.id)
+        const { data: reportsData } = await fetchUserReports(dbUserId)
         const reportsCount = reportsData?.length || 0
         const resolvedCount = reportsData?.filter((r: any) => r.status === 'fixed').length || 0
 
         const { data: leaderboardData } = await fetchLeaderboard()
-        const userScore = leaderboardData?.find((l: any) => l.user_id === user.id)?.score || 0
+        const userScore = leaderboardData?.find((l: any) => l.user_id === dbUserId)?.score || 0
 
         setHistory(reportsData?.slice(0, 5) || [])
 
@@ -95,6 +107,45 @@ export const ProfilePage = () => {
   }
 
   const completionPercent = calculateCompletion()
+
+  const handleEdit = () => {
+    if (profile) {
+      setEditForm({
+        name: profile.name,
+        phone: profile.phone || '',
+        bio: profile.bio || ''
+      })
+      setIsEditing(true)
+    }
+  }
+
+  const handleCancel = () => {
+    setIsEditing(false)
+    setEditForm({ name: '', phone: '', bio: '' })
+  }
+
+  const handleSave = async () => {
+    if (!profile) return
+
+    setSaving(true)
+    try {
+      await updateUser(profile.id, {
+        name: editForm.name,
+        phone: editForm.phone,
+        bio: editForm.bio
+      })
+
+      setProfile({ ...profile, ...editForm })
+      setIsEditing(false)
+      setSuccess('Profile updated successfully!')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err: any) {
+      setError('Failed to update profile. Please try again.')
+      setTimeout(() => setError(''), 3000)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -137,6 +188,20 @@ export const ProfilePage = () => {
                </button>
             </div>
             <CardContent className="relative pt-0 pb-6 px-6 flex flex-col items-center">
+              {error && (
+                <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm flex items-start gap-2 w-full">
+                  <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {success && (
+                <div className="mb-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm flex items-start gap-2 w-full">
+                  <CheckCircle size={16} className="mt-0.5 flex-shrink-0" />
+                  <span>{success}</span>
+                </div>
+              )}
+
               <div className="-mt-14 mb-4">
                 <div className="w-28 h-28 rounded-full bg-white dark:bg-slate-950 p-1.5 shadow-xl relative group">
                   <div className="w-full h-full rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 overflow-hidden relative">
@@ -154,32 +219,99 @@ export const ProfilePage = () => {
                 </div>
               </div>
 
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white text-center flex items-center gap-2 justify-center mb-1">
-                {profile?.name}
-              </h1>
-              
-              <Badge variant={
-                profile?.role === 'admin' ? 'destructive' :
-                  profile?.role === 'worker' ? 'secondary' : 'success'
-              } className="capitalize text-xs mb-4">
-                {profile?.role} Account
-              </Badge>
-              
-              <div className="w-full space-y-3 mt-4 text-sm">
-                 <div className="flex items-center text-slate-600 dark:text-slate-300 gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
-                    <Mail size={16} className="text-emerald-500" />
-                    <span className="truncate">{profile?.email}</span>
-                 </div>
-                 
-                 <div className="flex items-center text-slate-600 dark:text-slate-300 gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
-                    <Calendar size={16} className="text-emerald-500" />
-                    <span>Member since {new Date(profile?.created_at || '').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
-                 </div>
-              </div>
+              {isEditing ? (
+                <div className="space-y-3 mt-4">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Name</label>
+                    <input
+                      type="text"
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Phone (India)</label>
+                    <input
+                      type="tel"
+                      value={editForm.phone}
+                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                      placeholder="98765 43210"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Bio</label>
+                    <textarea
+                      value={editForm.bio}
+                      onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                      placeholder="Tell us about yourself..."
+                      rows={3}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm resize-none"
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                    >
+                      <Save size={16} /> {saving ? 'Saving...' : 'Save'}
+                    </Button>
+                    <Button
+                      onClick={handleCancel}
+                      disabled={saving}
+                      variant="outline"
+                      className="flex-1 gap-2"
+                    >
+                      <X size={16} /> Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-xl font-bold text-slate-900 dark:text-white text-center flex items-center gap-2 justify-center mb-1">
+                    {profile?.name}
+                  </h1>
 
-              <Button className="w-full mt-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 gap-2">
-                <Edit2 size={16} /> Edit Profile Data
-              </Button>
+                  <Badge variant={
+                    profile?.role === 'admin' ? 'destructive' :
+                      profile?.role === 'worker' ? 'secondary' : 'success'
+                  } className="capitalize text-xs mb-4">
+                    {profile?.role} Account
+                  </Badge>
+
+                  <div className="w-full space-y-3 mt-4 text-sm">
+                     <div className="flex items-center text-slate-600 dark:text-slate-300 gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                      <Mail size={16} className="text-emerald-500" />
+                      <span className="truncate">{profile?.email}</span>
+                     </div>
+
+                     {profile?.phone && (
+                       <div className="flex items-center text-slate-600 dark:text-slate-300 gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                        <Phone size={16} className="text-emerald-500" />
+                        <span>{profile.phone}</span>
+                       </div>
+                     )}
+
+                     {profile?.bio && (
+                       <div className="flex items-start text-slate-600 dark:text-slate-300 gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                        <AlignLeft size={16} className="text-emerald-500 mt-0.5" />
+                        <span className="text-xs">{profile.bio}</span>
+                       </div>
+                     )}
+
+                     <div className="flex items-center text-slate-600 dark:text-slate-300 gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                      <Calendar size={16} className="text-emerald-500" />
+                      <span>Member since {new Date(profile?.created_at || '').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                     </div>
+                  </div>
+
+                  <Button onClick={handleEdit} className="w-full mt-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 gap-2">
+                    <Edit2 size={16} /> Edit Profile
+                  </Button>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -286,33 +418,50 @@ export const ProfilePage = () => {
                 <div className="text-center py-10"><Loader2 className="animate-spin mx-auto text-slate-400" /></div>
               ) : history.length > 0 ? (
                 <div className="space-y-3">
-                  {history.map((item: any) => (
-                    <div key={item.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/50 dark:hover:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors">
-                      <div className="flex items-start sm:items-center gap-4 mb-3 sm:mb-0">
-                        <div className={`p-2.5 rounded-full shrink-0 ${item.status === 'fixed' ? 'bg-emerald-100 text-emerald-600' :
-                          item.status === 'assigned' ? 'bg-blue-100 text-blue-600' :
-                            'bg-amber-100 text-amber-600'
-                          }`}>
-                          {item.status === 'fixed' ? <CheckCircle size={18} /> :
-                            item.status === 'assigned' ? <User size={18} /> :
-                              <Clock size={18} />}
+                  {history.map((item: any) => {
+                    let aiInsight: string | null = null
+                    try {
+                      if (item.ai_summary) {
+                        const parsed = JSON.parse(item.ai_summary)
+                        aiInsight = parsed?.summary || parsed?.recommendedAction || parsed?.civicImpact || null
+                      }
+                    } catch {
+                      aiInsight = null
+                    }
+
+                    return (
+                      <div key={item.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/50 dark:hover:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors">
+                        <div className="flex items-start sm:items-center gap-4 mb-3 sm:mb-0">
+                          <div className={`p-2.5 rounded-full shrink-0 ${item.status === 'fixed' ? 'bg-emerald-100 text-emerald-600' :
+                            item.status === 'assigned' ? 'bg-blue-100 text-blue-600' :
+                              'bg-amber-100 text-amber-600'
+                            }`}>
+                            {item.status === 'fixed' ? <CheckCircle size={18} /> :
+                              item.status === 'assigned' ? <User size={18} /> :
+                                <Clock size={18} />}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base leading-tight">
+                              {item.complaint_text || 'Pothole Report'}
+                            </p>
+                            {aiInsight && (
+                              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                                {aiInsight}
+                              </p>
+                            )}
+                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                              <Calendar size={12} /> {new Date(item.created_at).toLocaleDateString()}
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 mx-1"></span>
+                              <span className="capitalize">{item.severity} severity</span>
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base leading-tight">
-                            {item.complaint_text || 'Pothole Report'}
-                          </p>
-                          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-                            <Calendar size={12} /> {new Date(item.created_at).toLocaleDateString()}
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 mx-1"></span>
-                            <span className="capitalize">{item.severity} severity</span>
-                          </p>
-                        </div>
+                        <Badge variant={item.status === 'fixed' ? 'success' : 'secondary'} className="self-start sm:self-auto uppercase tracking-wide text-[10px]">
+                          {item.status}
+                        </Badge>
                       </div>
-                      <Badge variant={item.status === 'fixed' ? 'success' : 'secondary'} className="self-start sm:self-auto uppercase tracking-wide text-[10px]">
-                        {item.status}
-                      </Badge>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-12 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">

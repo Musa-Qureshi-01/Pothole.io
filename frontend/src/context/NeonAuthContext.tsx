@@ -14,8 +14,8 @@ interface NeonUser {
 interface AuthContextValue {
   user: NeonUser | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error?: string }>
-  signUp: (name: string, email: string, password: string) => Promise<{ error?: string }>
+  signIn: (email: string, password: string) => Promise<{ error?: string; needsVerification?: boolean }>
+  signUp: (name: string, email: string, password: string) => Promise<{ error?: string; needsVerification?: boolean }>
   signInWithGoogle: () => void
   signOut: () => Promise<void>
 }
@@ -66,11 +66,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const result = await neonClient.auth.signIn.email({ email, password })
       if (result.error) {
+        const msg = (result.error.message || 'Sign in failed').toLowerCase()
+        if (msg.includes('verif') || msg.includes('not verified') || msg.includes('email_not_verified')) {
+          return { error: 'Please verify your email first. Check your inbox for the verification link.', needsVerification: true }
+        }
         return { error: result.error.message || 'Sign in failed' }
       }
       await checkSession()
+
+      // Check if session user is unverified
+      try {
+        const sessionResult = await neonClient.auth.getSession()
+        const sessionUser = sessionResult.data?.user as (NeonUser & { emailVerified?: boolean }) | undefined
+        if (sessionUser && sessionUser.emailVerified === false) {
+          return { needsVerification: true }
+        }
+      } catch (e) {
+        // Fall back to normal login
+      }
+
       return {}
     } catch (err: any) {
+      const msg = (err?.message || '').toLowerCase()
+      if (msg.includes('verif') || msg.includes('not verified') || msg.includes('email_not_verified')) {
+        return { error: 'Please verify your email first. Check your inbox for the verification link.', needsVerification: true }
+      }
       return { error: err?.message || 'Sign in failed' }
     }
   }
@@ -81,8 +101,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (result.error) {
         return { error: result.error.message || 'Sign up failed' }
       }
-      await checkSession()
-      return {}
+      // After signup, check if email verification is needed
+      const sessionResult = await neonClient.auth.getSession()
+      if (sessionResult.data?.session && sessionResult.data?.user) {
+        setUser(sessionResult.data.user as unknown as NeonUser)
+        localStorage.setItem('neon_user', JSON.stringify(sessionResult.data.user))
+        if ((sessionResult.data.user as any).emailVerified === false) {
+          return { needsVerification: true }
+        }
+        return {}
+      } else {
+        // Account created but no session = verification email sent
+        return { needsVerification: true }
+      }
     } catch (err: any) {
       return { error: err?.message || 'Sign up failed' }
     }
@@ -92,7 +123,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await neonClient.auth.signIn.social({
         provider: 'google',
-        callbackURL: `${window.location.origin}/prediction`
+        callbackURL: `${window.location.origin}/auth/callback`
       })
     } catch (err) {
       console.error('Google Auth Failed', err)

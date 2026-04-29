@@ -6,6 +6,8 @@ import { useAuth } from '../context/NeonAuthContext';
 import { DetectionMap } from '../components/DetectionMap';
 import { AIMetrics } from '../components/AIMetrics';
 import type { PotholePredictionResponse } from '../types/api';
+import { savePredictionReport } from '../api/reports';
+import { createUser, getUserByEmail } from '../api/neon';
 
 function dataUrlFromBase64(b64: string) {
   return `data:image/png;base64,${b64}`;
@@ -89,42 +91,49 @@ export function PredictionPage() {
     setLoading(true);
     setError(null);
     setResult(null);
-    const positionPromise = new Promise<{ lat: number; lng: number } | null>((resolve) => {
-      if (!navigator.geolocation) {
-        resolve(null);
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
-        () => resolve(null),
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-      );
-    });
     try {
-      const [res, location] = await Promise.all([predict(file), positionPromise]);
+      const res = await predict(file);
+      const location = null; // Location is intentionally captured later (only if user submits a report).
       setResult(res);
       setLastLocation(location);
 
       const imageDataUrl = preview ?? '';
 
+      let reportId: string | null = null
       if (user) {
-        const publicUrl = `https://placeholder-url/${user.id}/${Date.now()}.jpg`
-
         const areaRatio = res.metrics?.area_ratio ?? 0
         const severity = areaRatio > 0.05 ? 'critical' : areaRatio > 0.02 ? 'high' : areaRatio > 0.005 ? 'medium' : 'low'
 
-        const { savePredictionReport } = await import('../api/reports')
-        await savePredictionReport(
-          user.id,
-          publicUrl,
-          '',
-          location?.lat || 0,
-          location?.lng || 0,
-          severity,
-          "Auto-generated report from AI Detection",
-          res.message,
-          res.metrics
-        )
+        // Resolve the NeonDB `users.id` by email so the foreign key matches.
+        // After redeploys/migrations, Neon Auth user ids and our `users` table ids can diverge.
+        let dbUserId: string | null = null
+        const { data: existingUser } = await getUserByEmail(user.email)
+        if (existingUser?.id) {
+          dbUserId = existingUser.id
+        } else {
+          const { data: createdUser } = await createUser({
+            email: user.email,
+            name: user.name || user.email.split('@')[0],
+            role: 'citizen',
+          })
+          dbUserId = createdUser?.id ?? null
+        }
+
+        if (dbUserId) {
+          const publicUrl = `https://placeholder-url/${dbUserId}/${Date.now()}.jpg`
+          const savedReport = await savePredictionReport(
+            dbUserId,
+            publicUrl,
+            '',
+            0,
+            0,
+            severity,
+            "Auto-generated report from AI Detection",
+            res.message,
+            res.metrics
+          )
+          reportId = savedReport?.id ?? null
+        }
       }
 
       const overlayDataUrl = res.overlay_png_base64 ? dataUrlFromBase64(res.overlay_png_base64) : null;
@@ -140,6 +149,7 @@ export function PredictionPage() {
         message: res.message,
         metrics: res.metrics,
         location,
+        reportId,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Request failed');

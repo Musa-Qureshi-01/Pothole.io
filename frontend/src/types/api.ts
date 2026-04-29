@@ -30,4 +30,7 @@ export interface PredictionRecord {
   message: string;
   metrics: SegmentationMetrics | null;
   location: { lat: number; lng: number } | null;
+  // When we persist a prediction into Neon `reports`, we store the row id here so
+  // later report generation can update the same DB row.
+  reportId?: string | null;
 }

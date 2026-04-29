@@ -76,14 +76,18 @@ export const generateAIReport = async (
     - **Surface Area Impact:** ${detectionResult.area_pixels || 'N/A'} pixels (approximate)
 
     **Required Output (JSON Format Only):**
-    Please provide a structured JSON response with the following fields:
-    1. "summary": A concise, executive-level summary of the issue (2-3 sentences), citing the severity and location context.
-    2. "riskLevel": The calculated risk level (Low / Medium / High / Critical) based on the size and severity.
-    3. "recommendedAction": Specific maintenance action required (e.g., "Immediate cold patch", "Resurfacing required", "Monitor status").
-    4. "civicImpact": A brief statement on how this impacts public safety or traffic flow (e.g., "High risk to two-wheelers", "Potential for vehicle damage").
+    Return ONLY a single valid JSON object (no markdown, no code fences, no extra text) with EXACTLY these fields:
+
+    - "summary": string (2-3 sentences, executive-level)
+    - "riskLevel": string (one of: "Low" | "Medium" | "High" | "Critical")
+    - "recommendedAction": string (one primary actionable action)
+    - "recommendedActions": string[] (2-5 supporting actions)
+    - "civicImpact": string (public-safety/traffic impact)
+    - "fieldChecklist": string[] (2-6 items the inspector should verify on-site)
+    - "timeline": Array<{ phase: string, when: string, actions: string[] }>
+    - "assumptions": string[] (2-5 assumptions made from available data)
 
     Ensure the tone is professional, objective, and actionable for municipal authorities.
-    Return ONLY a single valid JSON block, no markdown formatting or extra text.
   `
 
   try {
@@ -131,11 +135,70 @@ export const generateAIReport = async (
             .map((m: any) => m.assistant_message.content)
             .reverse();
             
-          const combinedText = assistantMessages.join(' ');
-          
-          // Pattern match for JSON
-          const jsonMatch = combinedText.match(/\{[\s\S]*\}/);
-          return jsonMatch ? JSON.parse(jsonMatch[0]) : { summary: combinedText || 'Analysis complete.' };
+          const combinedText = assistantMessages.join(' ').trim();
+
+          const extractJsonObject = (text: string) => {
+            const cleaned = text
+              .replace(/```json/gi, '')
+              .replace(/```/g, '')
+              .trim();
+            const start = cleaned.indexOf('{');
+            const end = cleaned.lastIndexOf('}');
+            if (start === -1 || end === -1 || end <= start) return null;
+            return cleaned.slice(start, end + 1);
+          }
+
+          const jsonText = extractJsonObject(combinedText);
+          if (!jsonText) {
+            return {
+              summary: combinedText || 'Analysis complete.',
+              riskLevel: 'Unknown',
+              recommendedAction: 'Review required',
+              recommendedActions: [],
+              civicImpact: '',
+              fieldChecklist: [],
+              timeline: [],
+              assumptions: [],
+            }
+          }
+
+          let parsed: any = null;
+          try {
+            parsed = JSON.parse(jsonText);
+          } catch {
+            return {
+              summary: combinedText || 'Analysis complete.',
+              riskLevel: 'Unknown',
+              recommendedAction: 'Review required',
+              recommendedActions: [],
+              civicImpact: '',
+              fieldChecklist: [],
+              timeline: [],
+              assumptions: [],
+            }
+          }
+
+          const riskAllowed = new Set(['Low', 'Medium', 'High', 'Critical']);
+          const riskLevel = typeof parsed?.riskLevel === 'string' && riskAllowed.has(parsed.riskLevel)
+            ? parsed.riskLevel
+            : 'Unknown'
+
+          const recommendedAction =
+            typeof parsed?.recommendedAction === 'string'
+              ? parsed.recommendedAction
+              : (Array.isArray(parsed?.recommendedActions) ? parsed.recommendedActions?.[0] : null)
+              || 'Review required'
+
+          return {
+            summary: typeof parsed?.summary === 'string' ? parsed.summary : (combinedText || 'Analysis complete.'),
+            riskLevel,
+            recommendedAction,
+            recommendedActions: Array.isArray(parsed?.recommendedActions) ? parsed.recommendedActions : [],
+            civicImpact: typeof parsed?.civicImpact === 'string' ? parsed.civicImpact : '',
+            fieldChecklist: Array.isArray(parsed?.fieldChecklist) ? parsed.fieldChecklist : [],
+            timeline: Array.isArray(parsed?.timeline) ? parsed.timeline : [],
+            assumptions: Array.isArray(parsed?.assumptions) ? parsed.assumptions : [],
+          };
         }
       }
       maxRetries--;

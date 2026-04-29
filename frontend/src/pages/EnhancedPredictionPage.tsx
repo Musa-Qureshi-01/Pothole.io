@@ -1,49 +1,93 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { PredictionPage as OriginalPredictionPage } from './PredictionPage'
 import { useAuth } from '../context/NeonAuthContext'
-import { savePredictionReport, uploadImage, updateLeaderboard } from '../api/reports'
+import { updateLeaderboard, updateReport } from '../api/reports'
 import { generateAIReport } from '../lib/gemini'
+import { usePredictions } from '../context/PredictionsContext'
+import { createUser, getUserByEmail } from '../api/neon'
 
 export const EnhancedPredictionPage = () => {
   const { user } = useAuth()
+  const { predictions } = usePredictions()
   const [showReportForm, setShowReportForm] = useState(false)
   const [severity, setSeverity] = useState('medium')
   const [complaintText, setComplaintText] = useState('')
   const [reportLoading, setReportLoading] = useState(false)
   const [reportSuccess, setReportSuccess] = useState(false)
 
-  const handleSubmitReport = async (predictionResult: any, lastLocation: any, file: File) => {
+  const latestPrediction = predictions[0]
+  const canSubmit = Boolean(user && latestPrediction?.reportId)
+
+  const resolvedSeverity = useMemo(() => {
+    // The DB schema uses lowercase severities.
+    const s = (severity || '').toLowerCase()
+    if (s === 'low' || s === 'medium' || s === 'high' || s === 'critical') return s
+    return 'medium'
+  }, [severity])
+
+  const handleSubmitReport = async () => {
     if (!user) {
       alert('Please login to submit a report')
+      return
+    }
+    if (!latestPrediction?.reportId) {
+      alert('No DB report found for this prediction yet. Run detection first.')
       return
     }
 
     setReportLoading(true)
 
     try {
-      // Upload original image
-      const imageUrl = await uploadImage(file, 'reports')
-      if (!imageUrl) throw new Error('Failed to upload image')
+      // Capture location only at submit time (permission-friendly).
+      let location = latestPrediction.location
+      if (!location && navigator.geolocation) {
+        location = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+            () => resolve(null),
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+          )
+        })
+      }
 
-      // Generate AI report
-      const aiReport = await generateAIReport(complaintText, severity, lastLocation, predictionResult)
+      const safeLocation = location || { lat: 0, lng: 0 }
 
-      // Save to database
-      await savePredictionReport(
-        user.id,
-        imageUrl,
-        '', // segmented URL can be added later
-        lastLocation.lat,
-        lastLocation.lng,
-        severity,
+      // Generate AI report from the saved prediction.
+      const aiReport = await generateAIReport(
         complaintText,
-        JSON.stringify(aiReport),
-        predictionResult.metrics
+        resolvedSeverity,
+        safeLocation,
+        latestPrediction
       )
 
-      // Update leaderboard
-      await updateLeaderboard(user.id)
+      // Ensure we can update the leaderboard by attaching to the correct `users.id`.
+      // Like PredictionPage, we resolve the DB user by email.
+      const { data: existingUser } = await getUserByEmail(user.email)
+      const dbUserId =
+        existingUser?.id ||
+        (await createUser({
+          email: user.email,
+          name: user.name || user.email.split('@')[0],
+          role: 'citizen',
+        }))?.data?.id
+
+      if (!dbUserId) {
+        throw new Error('Failed to resolve user record for report persistence.')
+      }
+
+      await updateReport(latestPrediction.reportId, {
+        complaintText,
+        aiSummary: JSON.stringify(aiReport),
+        severity: resolvedSeverity,
+        metrics: latestPrediction.metrics,
+        latitude: safeLocation.lat,
+        longitude: safeLocation.lng,
+        // Keep status as pending until admin/worker updates it.
+      })
+
+      // Update leaderboard using DB user id.
+      await updateLeaderboard(dbUserId)
 
       setReportSuccess(true)
       setTimeout(() => {
@@ -62,6 +106,31 @@ export const EnhancedPredictionPage = () => {
   return (
     <div className="space-y-8">
       <OriginalPredictionPage />
+
+      {/* Open report form for the latest detection */}
+      {!showReportForm && latestPrediction?.reportId && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-glass border border-slate-200/50 dark:border-slate-700/50"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Generate AI Report</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Add context and we will create a structured, municipality-ready report.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowReportForm(true)}
+              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
+            >
+              Write & Submit
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Report Submission Form */}
       {showReportForm && (
@@ -100,8 +169,8 @@ export const EnhancedPredictionPage = () => {
 
             <div className="flex gap-3">
               <button
-                onClick={() => handleSubmitReport({}, {}, new File([], 'temp'))}
-                disabled={reportLoading || !complaintText}
+                onClick={handleSubmitReport}
+                disabled={reportLoading || !complaintText || !canSubmit}
                 className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium disabled:opacity-50"
               >
                 {reportLoading ? 'Submitting...' : 'Submit Report'}

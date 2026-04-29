@@ -4,14 +4,18 @@ import { usePredictions } from '../context/PredictionsContext';
 import { downloadReportAsPDF, downloadReportAsJSON } from '../lib/report';
 import { generateAIReport } from '../lib/gemini';
 import { AIMetrics } from '../components/AIMetrics';
+import { useAuth } from '../context/NeonAuthContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { FileText, Download, Share2, Send, Loader2, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { updateLeaderboard, updateReport } from '../api/reports';
+import { createUser, getUserByEmail } from '../api/neon';
 
 export function ReportPage() {
   const { predictions } = usePredictions();
+  const { user } = useAuth();
   const [selectedId, setSelectedId] = useState<string | null>(predictions[0]?.id ?? null);
   const [complaint, setComplaint] = useState('');
   const [userName, setUserName] = useState('Demo User');
@@ -31,23 +35,69 @@ export function ReportPage() {
     setGenerated(null);
 
     try {
-      const location = selected.location || { lat: 0, lng: 0 };
-      const severity = selected.isPothole && selected.metrics?.area_ratio != null
+      // Capture location only when the user explicitly generates the AI report.
+      let location = selected.location
+      if (!location && navigator.geolocation) {
+        location = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+            () => resolve(null),
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+          )
+        })
+      }
+
+      const safeLocation = location || { lat: 0, lng: 0 }
+
+      const severityUi = selected.isPothole && selected.metrics?.area_ratio != null
         ? selected.metrics.area_ratio >= 0.15 ? 'High' : selected.metrics.area_ratio >= 0.05 ? 'Medium' : 'Low'
         : 'N/A';
 
       const report = await generateAIReport(
         complaint,
-        severity,
-        location,
+        severityUi,
+        safeLocation,
         selected
       );
 
+      // Persist to Neon (if we have a DB report row id).
+      if (selected.reportId && user) {
+        const severityDb =
+          severityUi === 'High' ? 'high' :
+          severityUi === 'Medium' ? 'medium' :
+          severityUi === 'Low' ? 'low' :
+          'low'
+
+        await updateReport(selected.reportId, {
+          complaintText: complaint,
+          aiSummary: JSON.stringify(report),
+          severity: severityDb,
+          metrics: selected.metrics,
+          latitude: safeLocation.lat,
+          longitude: safeLocation.lng,
+        })
+
+        // Update leaderboard using DB user id resolved from email.
+        const { data: existingUser } = await getUserByEmail(user.email)
+        const dbUserId =
+          existingUser?.id ||
+          (await createUser({
+            email: user.email,
+            name: user.name || user.email.split('@')[0],
+            role: 'citizen',
+          }))?.data?.id
+
+        if (dbUserId) {
+          await updateLeaderboard(dbUserId)
+        }
+      }
+
       setGenerated({
+        report,
         summary: report.summary,
         severityExplanation: `Risk Level: ${report.riskLevel || 'Unknown'}. ${report.civicImpact || ''}`,
         suggestedAction: report.recommendedAction || 'Review required',
-        severityLevel: severity
+        severityLevel: severityUi
       });
     } catch (err) {
       console.error("Failed to generate report:", err);
@@ -222,6 +272,63 @@ export function ReportPage() {
                       {generated.suggestedAction}
                     </p>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold uppercase text-slate-500 tracking-wider">Civic Impact</h4>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                      {generated.report?.civicImpact || '—'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold uppercase text-slate-500 tracking-wider">Field Checklist</h4>
+                    <ul className="text-sm text-slate-700 dark:text-slate-300 list-disc pl-5 space-y-1">
+                      {(generated.report?.fieldChecklist || []).slice(0, 6).map((item: string, idx: number) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                      {(!generated.report?.fieldChecklist || generated.report.fieldChecklist.length === 0) && (
+                        <li className="text-slate-500">—</li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold uppercase text-slate-500 tracking-wider">Timeline</h4>
+                  <div className="space-y-3">
+                    {(generated.report?.timeline || []).slice(0, 4).map((t: any, idx: number) => (
+                      <div key={idx} className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/30">
+                        <p className="font-semibold text-slate-900 dark:text-white">
+                          {t?.phase || 'Phase'} <span className="font-normal text-slate-500">· {t?.when || ''}</span>
+                        </p>
+                        <ul className="text-sm text-slate-700 dark:text-slate-300 list-disc pl-5 mt-2 space-y-1">
+                          {(t?.actions || []).slice(0, 6).map((a: string, aIdx: number) => (
+                            <li key={aIdx}>{a}</li>
+                          ))}
+                          {(t?.actions || []).length === 0 && (
+                            <li className="text-slate-500">—</li>
+                          )}
+                        </ul>
+                      </div>
+                    ))}
+                    {(!generated.report?.timeline || generated.report.timeline.length === 0) && (
+                      <p className="text-sm text-slate-500">—</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold uppercase text-slate-500 tracking-wider">Assumptions</h4>
+                  <ul className="text-sm text-slate-700 dark:text-slate-300 list-disc pl-5 space-y-1">
+                    {(generated.report?.assumptions || []).slice(0, 6).map((item: string, idx: number) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                    {(!generated.report?.assumptions || generated.report.assumptions.length === 0) && (
+                      <li className="text-slate-500">—</li>
+                    )}
+                  </ul>
                 </div>
               </CardContent>
               <div className="bg-slate-50 dark:bg-slate-900/50 p-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap gap-3">
