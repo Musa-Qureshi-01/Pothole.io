@@ -29,7 +29,8 @@ export function downloadReportAsPDF(record: PredictionRecord) {
   }
   doc.text(`Result: ${record.isPothole ? 'Pothole detected' : 'No pothole'}`, margin, y);
   y += 6;
-  doc.text(`Confidence: ${(record.confidence * 100).toFixed(1)}%`, margin, y);
+  const confVal = record.confidence > 1 ? record.confidence : record.confidence * 100;
+  doc.text(`Confidence: ${confVal.toFixed(1)}%`, margin, y);
   y += 6;
   if (record.metrics?.area_pixels != null) {
     doc.text(`Area (pixels): ${record.metrics.area_pixels}`, margin, y);

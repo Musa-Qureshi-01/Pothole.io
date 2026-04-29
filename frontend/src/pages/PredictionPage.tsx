@@ -92,8 +92,20 @@ export function PredictionPage() {
     setError(null);
     setResult(null);
     try {
+      // Capture location immediately on detection
+      let location = null;
+      if (navigator.geolocation) {
+        try {
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+          });
+          location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        } catch (e) {
+          console.warn('Geolocation failed', e);
+        }
+      }
+
       const res = await predict(file);
-      const location = null; // Location is intentionally captured later (only if user submits a report).
       setResult(res);
       setLastLocation(location);
 
@@ -140,6 +152,7 @@ export function PredictionPage() {
       const maskDataUrl = res.mask_png_base64 ? dataUrlFromBase64(res.mask_png_base64) : null;
 
       addPrediction({
+        id: crypto.randomUUID(),
         timestamp: new Date().toISOString(),
         imageDataUrl,
         overlayDataUrl,

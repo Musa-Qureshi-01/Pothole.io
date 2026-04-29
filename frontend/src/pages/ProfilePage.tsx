@@ -74,7 +74,7 @@ export const ProfilePage = () => {
         const { data: leaderboardData } = await fetchLeaderboard()
         const userScore = leaderboardData?.find((l: any) => l.user_id === dbUserId)?.score || 0
 
-        setHistory(reportsData?.slice(0, 5) || [])
+        setHistory(reportsData || [])
 
         setStats({
           reportsSubmitted: reportsCount,
@@ -359,14 +359,33 @@ export const ProfilePage = () => {
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                    <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
                       <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2"><Phone size={12}/> Phone Number</label>
-                      <input type="tel" placeholder="Add phone (Optional)" defaultValue={profile?.phone} className="w-full bg-transparent text-sm font-medium text-slate-800 dark:text-slate-200 placeholder:text-slate-400 outline-none border-b border-slate-200 dark:border-slate-800 pb-1 focus:border-emerald-500 transition-colors" />
+                      <input 
+                         type="tel" 
+                         placeholder="Add phone (Optional)" 
+                         value={editForm.phone} 
+                         onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                         className="w-full bg-transparent text-sm font-medium text-slate-800 dark:text-slate-200 placeholder:text-slate-400 outline-none border-b border-slate-200 dark:border-slate-800 pb-1 focus:border-emerald-500 transition-colors" 
+                       />
                    </div>
                    <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
                       <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2"><AlignLeft size={12}/> Short Bio</label>
-                      <input type="text" placeholder="Add bio (Optional)" defaultValue={profile?.bio} className="w-full bg-transparent text-sm font-medium text-slate-800 dark:text-slate-200 placeholder:text-slate-400 outline-none border-b border-slate-200 dark:border-slate-800 pb-1 focus:border-emerald-500 transition-colors" />
+                      <input 
+                         type="text" 
+                         placeholder="Add bio (Optional)" 
+                         value={editForm.bio} 
+                         onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                         className="w-full bg-transparent text-sm font-medium text-slate-800 dark:text-slate-200 placeholder:text-slate-400 outline-none border-b border-slate-200 dark:border-slate-800 pb-1 focus:border-emerald-500 transition-colors" 
+                       />
                    </div>
                    <div className="col-span-1 md:col-span-2 flex justify-end mt-2">
-                     <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg">Save Details</Button>
+                     <Button 
+                        size="sm" 
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg"
+                      >
+                        {saving ? 'Saving...' : 'Save Details'}
+                      </Button>
                    </div>
                 </CardContent>
              </Card>
@@ -430,7 +449,7 @@ export const ProfilePage = () => {
                     }
 
                     return (
-                      <div key={item.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/50 dark:hover:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors">
+                       <div key={item.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/50 dark:hover:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 transition-all">
                         <div className="flex items-start sm:items-center gap-4 mb-3 sm:mb-0">
                           <div className={`p-2.5 rounded-full shrink-0 ${item.status === 'fixed' ? 'bg-emerald-100 text-emerald-600' :
                             item.status === 'assigned' ? 'bg-blue-100 text-blue-600' :
@@ -445,7 +464,7 @@ export const ProfilePage = () => {
                               {item.complaint_text || 'Pothole Report'}
                             </p>
                             {aiInsight && (
-                              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 max-w-md line-clamp-1">
                                 {aiInsight}
                               </p>
                             )}
@@ -456,9 +475,33 @@ export const ProfilePage = () => {
                             </p>
                           </div>
                         </div>
-                        <Badge variant={item.status === 'fixed' ? 'success' : 'secondary'} className="self-start sm:self-auto uppercase tracking-wide text-[10px]">
-                          {item.status}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 text-[10px] uppercase font-bold"
+                            onClick={async () => {
+                              const { downloadReportAsPDF } = await import('../lib/report')
+                              downloadReportAsPDF({
+                                id: item.id,
+                                timestamp: item.created_at,
+                                imageDataUrl: item.image_url,
+                                overlayDataUrl: item.segmented_url || item.image_url,
+                                maskDataUrl: null,
+                                isPothole: true,
+                                confidence: item.metrics?.confidence || 0.9,
+                                message: item.ai_summary ? JSON.parse(item.ai_summary).summary : '',
+                                metrics: item.metrics,
+                                location: { lat: item.latitude, lng: item.longitude }
+                              })
+                            }}
+                          >
+                            PDF
+                          </Button>
+                          <Badge variant={item.status === 'fixed' ? 'success' : 'secondary'} className="uppercase tracking-wide text-[10px]">
+                            {item.status}
+                          </Badge>
+                        </div>
                       </div>
                     )
                   })}

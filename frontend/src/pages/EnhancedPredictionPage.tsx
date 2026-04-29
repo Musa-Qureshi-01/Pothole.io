@@ -39,20 +39,9 @@ export const EnhancedPredictionPage = () => {
     setReportLoading(true)
 
     try {
-      // Capture location only at submit time (permission-friendly).
-      let location = latestPrediction.location
-      if (!location && navigator.geolocation) {
-        location = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
-          navigator.geolocation.getCurrentPosition(
-            (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
-            () => resolve(null),
-            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-          )
-        })
-      }
-
-      const safeLocation = location || { lat: 0, lng: 0 }
-
+      // Use pre-captured location from prediction.
+      const safeLocation = latestPrediction.location || { lat: 0, lng: 0 }
+ 
       // Generate AI report from the saved prediction.
       const aiReport = await generateAIReport(
         complaintText,
@@ -190,9 +179,21 @@ export const EnhancedPredictionPage = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300"
+          className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 flex flex-col sm:flex-row items-center justify-between gap-4"
         >
-          ✓ Report submitted successfully! Admins will review it shortly.
+          <div className="flex items-center gap-3">
+             <span className="text-xl">✓</span>
+             <span className="font-medium">Report submitted successfully! Admins will review it shortly.</span>
+          </div>
+          <button
+            onClick={async () => {
+              const { downloadReportAsPDF } = await import('../lib/report');
+              downloadReportAsPDF(latestPrediction);
+            }}
+            className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors"
+          >
+            Download Report PDF
+          </button>
         </motion.div>
       )}
     </div>
