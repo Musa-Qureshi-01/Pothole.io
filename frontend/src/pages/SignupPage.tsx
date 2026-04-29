@@ -22,11 +22,11 @@ export const SignupPage = () => {
   const turnstileRef = useRef<HTMLDivElement>(null)
   const turnstileWidgetId = useRef<string | null>(null)
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY
-  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  const isDevOrPreview = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.endsWith('.vercel.app')
 
-  // On localhost, auto-pass Turnstile (Cloudflare doesn't allow localhost domains)
+  // On localhost or Vercel previews, auto-pass Turnstile (Cloudflare doesn't allow localhost domains)
   useEffect(() => {
-    if (isLocalhost && siteKey) {
+    if (isDevOrPreview && siteKey) {
       setTurnstileToken('localhost-bypass')
       return
     }
@@ -64,7 +64,7 @@ export const SignupPage = () => {
         turnstileWidgetId.current = null
       }
     }
-  }, [siteKey, isLocalhost])
+  }, [siteKey, isDevOrPreview])
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -277,11 +277,11 @@ export const SignupPage = () => {
 
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Human Verification</label>
-                  {isLocalhost && siteKey ? (
+                  {isDevOrPreview && siteKey ? (
                     <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 flex items-center gap-3">
                       <ShieldCheck size={20} className="text-blue-500" />
                       <span className="text-sm text-blue-700 dark:text-blue-300">
-                        Turnstile bypassed on localhost (active on production)
+                        Turnstile bypassed on dev/preview (active on production)
                       </span>
                     </div>
                   ) : siteKey ? (
