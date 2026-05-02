@@ -7,9 +7,10 @@ import { DetectionMap } from '../components/DetectionMap';
 import { AIMetrics } from '../components/AIMetrics';
 import type { PotholePredictionResponse } from '../types/api';
 import { savePredictionReport } from '../api/reports';
-import { createUser, getUserByEmail } from '../api/neon';
+import { ensureAppUser } from '../api/neon';
 
 function dataUrlFromBase64(b64: string) {
+  if (b64.startsWith('data:image/')) return b64;
   return `data:image/png;base64,${b64}`;
 }
 
@@ -22,6 +23,7 @@ export function PredictionPage() {
   const [error, setError] = useState<string | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [lastLocation, setLastLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationPromptOpen, setLocationPromptOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { addPrediction } = usePredictions();
@@ -86,18 +88,23 @@ export function PredictionPage() {
     }, 'image/jpeg', 0.9);
   }, []);
 
-  const runDetection = useCallback(async () => {
+  const runDetection = useCallback(async (includeLocation: boolean) => {
     if (!file) return;
+    setLocationPromptOpen(false);
     setLoading(true);
     setError(null);
     setResult(null);
+    setLastLocation(null);
     try {
-      // Capture location immediately on detection
       let location = null;
-      if (navigator.geolocation) {
+      if (includeLocation && navigator.geolocation) {
         try {
           const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 4000,
+              maximumAge: 60000,
+            });
           });
           location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         } catch (e) {
@@ -116,29 +123,17 @@ export function PredictionPage() {
         const areaRatio = res.metrics?.area_ratio ?? 0
         const severity = areaRatio > 0.05 ? 'critical' : areaRatio > 0.02 ? 'high' : areaRatio > 0.005 ? 'medium' : 'low'
 
-        // Resolve the NeonDB `users.id` by email so the foreign key matches.
-        // After redeploys/migrations, Neon Auth user ids and our `users` table ids can diverge.
-        let dbUserId: string | null = null
-        const { data: existingUser } = await getUserByEmail(user.email)
-        if (existingUser?.id) {
-          dbUserId = existingUser.id
-        } else {
-          const { data: createdUser } = await createUser({
-            email: user.email,
-            name: user.name || user.email.split('@')[0],
-            role: 'citizen',
-          })
-          dbUserId = createdUser?.id ?? null
-        }
+        const { data: appUser, error: userError } = await ensureAppUser(user)
+        if (userError) console.warn('Could not resolve app user for report:', userError)
 
-        if (dbUserId) {
-          const publicUrl = `https://placeholder-url/${dbUserId}/${Date.now()}.jpg`
+        if (appUser?.id) {
+          const publicUrl = `https://placeholder-url/${appUser.id}/${Date.now()}.jpg`
           const savedReport = await savePredictionReport(
-            dbUserId,
+            appUser.id,
             publicUrl,
             '',
-            0,
-            0,
+            location?.lat ?? null,
+            location?.lng ?? null,
             severity,
             "Auto-generated report from AI Detection",
             res.message,
@@ -152,7 +147,6 @@ export function PredictionPage() {
       const maskDataUrl = res.mask_png_base64 ? dataUrlFromBase64(res.mask_png_base64) : null;
 
       addPrediction({
-        id: crypto.randomUUID(),
         timestamp: new Date().toISOString(),
         imageDataUrl,
         overlayDataUrl,
@@ -261,7 +255,7 @@ export function PredictionPage() {
       <div className="flex flex-wrap gap-3">
         <button
           type="button"
-          onClick={runDetection}
+          onClick={() => setLocationPromptOpen(true)}
           disabled={!file || loading}
           className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-medium shadow-soft hover:bg-slate-800 dark:hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
@@ -282,6 +276,52 @@ export function PredictionPage() {
           </button>
         )}
       </div>
+
+      <AnimatePresence>
+        {locationPromptOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 px-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+            >
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Use your location?</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                Location helps attach this pothole report to the right place. You can still run detection without sharing it.
+              </p>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => runDetection(false)}
+                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  Detect without location
+                </button>
+                <button
+                  type="button"
+                  onClick={() => runDetection(true)}
+                  className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+                >
+                  Allow location and detect
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLocationPromptOpen(false)}
+                className="mt-4 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              >
+                Cancel
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {loading && (
         <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">

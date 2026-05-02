@@ -16,6 +16,8 @@ interface AuthContextValue {
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error?: string; needsVerification?: boolean }>
   signUp: (name: string, email: string, password: string) => Promise<{ error?: string; needsVerification?: boolean }>
+  verifyEmailOtp: (email: string, otp: string) => Promise<{ error?: string }>
+  resendVerificationCode: (email: string) => Promise<{ error?: string }>
   signInWithGoogle: () => void
   signOut: () => Promise<void>
 }
@@ -25,9 +27,22 @@ const AuthContext = createContext<AuthContextValue>({
   loading: true,
   signIn: async () => ({}),
   signUp: async () => ({}),
+  verifyEmailOtp: async () => ({}),
+  resendVerificationCode: async () => ({}),
   signInWithGoogle: () => {},
   signOut: async () => {},
 })
+
+const getAuthCallbackUrl = () => '/auth/callback'
+const getAuthErrorUrl = () => '/login'
+
+const getAuthErrorMessage = (fallback: string, message?: string) => {
+  const normalized = (message || '').toLowerCase()
+  if (normalized.includes('invalid origin') || normalized.includes('origin')) {
+    return 'This app domain is not allowed in Neon Auth. Add the current site URL to Neon Auth trusted origins.'
+  }
+  return message || fallback
+}
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<NeonUser | null>(() => {
@@ -64,13 +79,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const result = await neonClient.auth.signIn.email({ email, password })
+      const result = await neonClient.auth.signIn.email({
+        email,
+        password,
+        callbackURL: getAuthCallbackUrl(),
+      })
       if (result.error) {
         const msg = (result.error.message || 'Sign in failed').toLowerCase()
         if (msg.includes('verif') || msg.includes('not verified') || msg.includes('email_not_verified')) {
-          return { error: 'Please verify your email first. Check your inbox for the verification link.', needsVerification: true }
+          return { error: 'Please verify your email first. Check your inbox for the verification code or link.', needsVerification: true }
         }
-        return { error: result.error.message || 'Sign in failed' }
+        return { error: getAuthErrorMessage('Sign in failed', result.error.message) }
       }
       await checkSession()
 
@@ -89,17 +108,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (err: any) {
       const msg = (err?.message || '').toLowerCase()
       if (msg.includes('verif') || msg.includes('not verified') || msg.includes('email_not_verified')) {
-        return { error: 'Please verify your email first. Check your inbox for the verification link.', needsVerification: true }
+        return { error: 'Please verify your email first. Check your inbox for the verification code or link.', needsVerification: true }
       }
-      return { error: err?.message || 'Sign in failed' }
+      return { error: getAuthErrorMessage('Sign in failed', err?.message) }
     }
   }
 
   const signUp = async (name: string, email: string, password: string) => {
     try {
-      const result = await neonClient.auth.signUp.email({ name, email, password })
+      const result = await neonClient.auth.signUp.email({
+        name,
+        email,
+        password,
+        callbackURL: getAuthCallbackUrl(),
+      })
       if (result.error) {
-        return { error: result.error.message || 'Sign up failed' }
+        return { error: getAuthErrorMessage('Sign up failed', result.error.message) }
       }
       // After signup, check if email verification is needed
       const sessionResult = await neonClient.auth.getSession()
@@ -115,7 +139,61 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return { needsVerification: true }
       }
     } catch (err: any) {
-      return { error: err?.message || 'Sign up failed' }
+      return { error: getAuthErrorMessage('Sign up failed', err?.message) }
+    }
+  }
+
+  const verifyEmailOtp = async (email: string, otp: string) => {
+    const cleanedOtp = otp.replace(/\s/g, '')
+    if (!cleanedOtp) {
+      return { error: 'Enter the verification code from your email.' }
+    }
+
+    try {
+      const result = await (neonClient.auth as any).emailOtp.verifyEmail({
+        email,
+        otp: cleanedOtp,
+      })
+
+      if (result.error) {
+        return { error: result.error.message || 'Invalid or expired verification code.' }
+      }
+
+      await checkSession()
+
+      const sessionResult = await neonClient.auth.getSession()
+      if (sessionResult.data?.session && sessionResult.data?.user) {
+        setUser(sessionResult.data.user as unknown as NeonUser)
+        localStorage.setItem('neon_user', JSON.stringify(sessionResult.data.user))
+        return {}
+      }
+
+      const verifiedUser = result.data?.user
+      if (verifiedUser) {
+        setUser(verifiedUser as unknown as NeonUser)
+        localStorage.setItem('neon_user', JSON.stringify(verifiedUser))
+      }
+
+      return {}
+    } catch (err: any) {
+      return { error: err?.message || 'Unable to verify the code. Please try again.' }
+    }
+  }
+
+  const resendVerificationCode = async (email: string) => {
+    try {
+      const result = await (neonClient.auth as any).emailOtp.sendVerificationOtp({
+        email,
+        type: 'email-verification',
+      })
+
+      if (result.error) {
+        return { error: result.error.message || 'Unable to resend verification code.' }
+      }
+
+      return {}
+    } catch (err: any) {
+      return { error: err?.message || 'Unable to resend verification code.' }
     }
   }
 
@@ -123,7 +201,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await neonClient.auth.signIn.social({
         provider: 'google',
-        callbackURL: `${window.location.origin}/auth/callback`
+        callbackURL: getAuthCallbackUrl(),
+        newUserCallbackURL: getAuthCallbackUrl(),
+        errorCallbackURL: getAuthErrorUrl(),
       })
     } catch (err) {
       console.error('Google Auth Failed', err)
@@ -142,7 +222,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, verifyEmailOtp, resendVerificationCode, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   )

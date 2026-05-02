@@ -27,7 +27,7 @@ const STATS = [
 const STEPS = [
   { icon: Zap, title: 'Upload Image', desc: 'Take or upload a photo of the pothole in seconds' },
   { icon: Target, title: 'AI Detection', desc: 'Advanced YOLOv8 detects and segments automatically' },
-  { icon: TrendingUp, title: 'Generate Report', desc: 'Gemini AI creates professional, actionable reports' },
+  { icon: TrendingUp, title: 'Generate Report', desc: 'Manus generates professional, actionable maintenance reports' },
   { icon: Users, title: 'Authorities Fix', desc: 'Seamless handoff to city maintenance teams' },
 ];
 
@@ -124,7 +124,7 @@ export function HomePage() {
 
         {/* Hero Background - Seamless */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(15,23,42,0.08)_1px,transparent_1px)] bg-[length:18px_18px] opacity-20 mix-blend-overlay"></div>
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-700 to-transparent opacity-20" />
 
           <motion.div

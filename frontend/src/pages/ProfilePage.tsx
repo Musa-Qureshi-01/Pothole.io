@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createUser, fetchLeaderboard, fetchUserReports, getUserByEmail, updateUser } from '../api/neon'
+import { ensureAppUser, fetchUserReports, updateUser } from '../api/neon'
 import { useAuth } from '../context/NeonAuthContext'
 import { User, Mail, Calendar, FileText, CheckCircle, Trophy, Loader2, AlertCircle, BarChart, Edit2, Clock, Phone, AlignLeft, Camera, Save, X } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card'
@@ -45,15 +45,9 @@ export const ProfilePage = () => {
 
     const fetchProfileData = async () => {
       try {
-        const { data: profileData } = await getUserByEmail(user.email)
-        const dbUserId =
-          profileData?.id ||
-          (await createUser({
-            email: user.email,
-            name: user.name || user.email.split('@')[0],
-            role: 'citizen',
-          }))?.data?.id ||
-          user.id
+        const { data: profileData, error: profileError } = await ensureAppUser(user)
+        if (profileError) console.warn('Profile lookup failed:', profileError)
+        const dbUserId = profileData?.id || user.id
         
         // Merge Database profile with current Auth session 
         setProfile({
@@ -71,15 +65,12 @@ export const ProfilePage = () => {
         const reportsCount = reportsData?.length || 0
         const resolvedCount = reportsData?.filter((r: any) => r.status === 'fixed').length || 0
 
-        const { data: leaderboardData } = await fetchLeaderboard()
-        const userScore = leaderboardData?.find((l: any) => l.user_id === dbUserId)?.score || 0
-
         setHistory(reportsData || [])
 
         setStats({
           reportsSubmitted: reportsCount,
           resolvedReports: resolvedCount,
-          leaderboardScore: userScore,
+          leaderboardScore: reportsCount * 10 + resolvedCount * 50,
         })
       } catch (err: any) {
         console.error('Error fetching profile:', err)

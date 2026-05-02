@@ -3,9 +3,9 @@ import { motion } from 'framer-motion'
 import { PredictionPage as OriginalPredictionPage } from './PredictionPage'
 import { useAuth } from '../context/NeonAuthContext'
 import { updateLeaderboard, updateReport } from '../api/reports'
-import { generateAIReport } from '../lib/gemini'
+import { generateAIReportWithManus } from '../lib/aiServices'
 import { usePredictions } from '../context/PredictionsContext'
-import { createUser, getUserByEmail } from '../api/neon'
+import { ensureAppUser } from '../api/neon'
 
 export const EnhancedPredictionPage = () => {
   const { user } = useAuth()
@@ -43,25 +43,16 @@ export const EnhancedPredictionPage = () => {
       const safeLocation = latestPrediction.location || { lat: 0, lng: 0 }
  
       // Generate AI report from the saved prediction.
-      const aiReport = await generateAIReport(
+      const aiReport = await generateAIReportWithManus(
         complaintText,
         resolvedSeverity,
         safeLocation,
         latestPrediction
       )
 
-      // Ensure we can update the leaderboard by attaching to the correct `users.id`.
-      // Like PredictionPage, we resolve the DB user by email.
-      const { data: existingUser } = await getUserByEmail(user.email)
-      const dbUserId =
-        existingUser?.id ||
-        (await createUser({
-          email: user.email,
-          name: user.name || user.email.split('@')[0],
-          role: 'citizen',
-        }))?.data?.id
+      const { data: appUser } = await ensureAppUser(user)
 
-      if (!dbUserId) {
+      if (!appUser?.id) {
         throw new Error('Failed to resolve user record for report persistence.')
       }
 
@@ -76,7 +67,7 @@ export const EnhancedPredictionPage = () => {
       })
 
       // Update leaderboard using DB user id.
-      await updateLeaderboard(dbUserId)
+      await updateLeaderboard(appUser.id)
 
       setReportSuccess(true)
       setTimeout(() => {

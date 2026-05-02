@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
 import { PredictionsProvider } from './context/PredictionsContext'
 import { Layout } from './components/Layout'
@@ -20,7 +20,11 @@ const WorkerTaskPage = lazy(() => import('./pages/WorkerTaskPage').then(module =
 
 const AuthCallback = () => {
   const { user } = useAuth()
-  return <Navigate to={user ? "/prediction" : "/login"} replace />
+  const location = useLocation()
+  const authError = new URLSearchParams(location.search).get('error')
+  const loginTarget = authError ? `/login?error=${encodeURIComponent(authError)}` : '/login'
+
+  return <Navigate to={user ? "/prediction" : loginTarget} replace />
 }
 
 const PageLoader = () => (

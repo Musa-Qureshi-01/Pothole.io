@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { usePredictions } from '../context/PredictionsContext';
 import { downloadReportAsPDF, downloadReportAsJSON } from '../lib/report';
-import { generateAIReport } from '../lib/gemini';
+import { generateAIReportWithManus } from '../lib/aiServices';
 import { AIMetrics } from '../components/AIMetrics';
 import { useAuth } from '../context/NeonAuthContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card';
@@ -11,7 +11,7 @@ import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { FileText, Download, Share2, Send, Loader2, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 import { updateLeaderboard, updateReport } from '../api/reports';
-import { createUser, getUserByEmail } from '../api/neon';
+import { ensureAppUser } from '../api/neon';
 
 export function ReportPage() {
   const { predictions } = usePredictions();
@@ -42,7 +42,7 @@ export function ReportPage() {
           navigator.geolocation.getCurrentPosition(
             (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
             () => resolve(null),
-            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 4000, maximumAge: 60000 }
           )
         })
       }
@@ -53,7 +53,7 @@ export function ReportPage() {
         ? selected.metrics.area_ratio >= 0.15 ? 'High' : selected.metrics.area_ratio >= 0.05 ? 'Medium' : 'Low'
         : 'N/A';
 
-      const report = await generateAIReport(
+      const report = await generateAIReportWithManus(
         complaint,
         severityUi,
         safeLocation,
@@ -77,18 +77,10 @@ export function ReportPage() {
           longitude: safeLocation.lng,
         })
 
-        // Update leaderboard using DB user id resolved from email.
-        const { data: existingUser } = await getUserByEmail(user.email)
-        const dbUserId =
-          existingUser?.id ||
-          (await createUser({
-            email: user.email,
-            name: user.name || user.email.split('@')[0],
-            role: 'citizen',
-          }))?.data?.id
+        const { data: appUser } = await ensureAppUser(user)
 
-        if (dbUserId) {
-          await updateLeaderboard(dbUserId)
+        if (appUser?.id) {
+          await updateLeaderboard(appUser.id)
         }
       }
 

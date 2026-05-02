@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/NeonAuthContext'
 import { useEffect, useState } from 'react'
-import { createUser, getUserByEmail, getUserById } from '../api/neon'
+import { ensureAppUser } from '../api/neon'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -14,46 +14,37 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   const [roleLoading, setRoleLoading] = useState(true)
 
   useEffect(() => {
+    let cancelled = false
+
     const fetchUserRole = async () => {
       if (!user) {
         setRoleLoading(false)
         return
       }
 
+      setRoleLoading(true)
       try {
-        const { data } = await getUserById(user.id)
-        const userRow = data || (await getUserByEmail(user.email)).data
-        if (userRow) setUserRole(userRow?.role || 'citizen')
-        else {
-          // User exists in auth but not in custom users table — auto-create by email.
-          try {
-            const { data: newUser } = await createUser({
-              email: user.email,
-              name: user.name || user.email.split('@')[0],
-              role: 'citizen',
-            })
-            setUserRole(newUser?.role || 'citizen')
-          } catch (createErr) {
-            console.warn('Failed to auto-create user record:', createErr)
-            setUserRole('citizen') // Default to citizen role
-          }
-        }
+        const { data: userRow, error } = await ensureAppUser(user)
+        if (error) console.warn('User profile lookup failed:', error)
+        if (!cancelled) setUserRole(userRow?.role || 'citizen')
       } catch (error) {
         console.error('Error fetching user role:', error)
-        setUserRole('citizen') // Default to citizen if query fails (e.g., 404 from API)
+        if (!cancelled) setUserRole('citizen')
       } finally {
-        setRoleLoading(false)
+        if (!cancelled) setRoleLoading(false)
       }
     }
 
     fetchUserRole()
+    return () => {
+      cancelled = true
+    }
   }, [user])
 
   if (loading || roleLoading) return <div className="flex items-center justify-center min-h-screen">Loading...</div>
 
   if (!user) return <Navigate to="/login" replace />
 
-  // Check role if required
   if (requiredRole && userRole !== requiredRole) {
     return <Navigate to="/" replace />
   }

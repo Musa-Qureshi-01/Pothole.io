@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/NeonAuthContext'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { EmailVerificationPanel } from '../components/EmailVerificationPanel'
 import { Target, Loader2, ArrowLeft, ShieldCheck } from 'lucide-react'
 
 export const LoginPage = () => {
   const { signIn, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,6 +22,17 @@ export const LoginPage = () => {
   const turnstileWidgetId = useRef<string | null>(null)
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY
   const isDevOrPreview = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.endsWith('.vercel.app')
+
+  useEffect(() => {
+    const authError = new URLSearchParams(location.search).get('error')
+    if (!authError) return
+
+    setError(
+      authError
+        .replace(/[_-]/g, ' ')
+        .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    )
+  }, [location.search])
 
   // On localhost or Vercel previews, auto-pass Turnstile (Cloudflare doesn't allow localhost domains)
   useEffect(() => {
@@ -144,28 +157,14 @@ export const LoginPage = () => {
               )}
 
               {emailSent ? (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Verify your email</h2>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm mb-1">
-                    Your email is not yet verified. Check your inbox for the verification link sent to
-                  </p>
-                  <p className="text-amber-600 dark:text-amber-400 font-semibold text-sm mb-4">{email}</p>
-                  <p className="text-slate-500 dark:text-slate-500 text-xs mb-6">
-                    After verifying, try signing in again.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => { setEmailSent(false); setError('') }}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    Back to Sign In
-                  </button>
-                </div>
+                <EmailVerificationPanel
+                  email={email}
+                  onBack={() => { setEmailSent(false); setError('') }}
+                  onVerified={() => {
+                    setSuccess('Email verified successfully!')
+                    navigate('/prediction')
+                  }}
+                />
               ) : (
               <>
               <button

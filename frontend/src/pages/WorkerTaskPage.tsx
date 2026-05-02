@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fetchWorkerTasks, updateTaskStatus, updateReportStatus } from '../api/neon'
+import { ensureAppUser, fetchWorkerTasks, updateTaskStatus, updateReportStatus } from '../api/neon'
 import { useAuth } from '../context/NeonAuthContext'
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card'
@@ -20,7 +20,9 @@ export const WorkerTaskPage = () => {
   }, [user])
 
   const fetchTasks = async () => {
-    const { data, error } = await fetchWorkerTasks(user?.id || '')
+    if (!user) return
+    const { data: appUser } = await ensureAppUser(user)
+    const { data, error } = await fetchWorkerTasks(appUser?.id || '')
 
     if (error) {
       console.error('Error fetching tasks:', error)

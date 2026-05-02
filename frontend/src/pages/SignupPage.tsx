@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/NeonAuthContext'
-import { neonClient } from '../lib/neonClient'
+import { createUser } from '../api/neon'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { EmailVerificationPanel } from '../components/EmailVerificationPanel'
 import { Target, Loader2, ArrowLeft, ShieldCheck } from 'lucide-react'
 
 export const SignupPage = () => {
@@ -89,7 +90,7 @@ export const SignupPage = () => {
       // Update phone number if provided
       if (!result.error && phone) {
         try {
-          await neonClient.from('users').update({ phone }).eq('email', email)
+          await createUser({ email, name, phone, role: 'citizen' })
         } catch (e) {
           console.warn('Failed to update phone number:', e)
         }
@@ -161,27 +162,15 @@ export const SignupPage = () => {
               )}
 
               {emailSent ? (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Check your email</h2>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm mb-1">
-                    We've sent a verification link to
-                  </p>
-                  <p className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm mb-4">{email}</p>
-                  <p className="text-slate-500 dark:text-slate-500 text-xs mb-6">
-                    Click the link in the email to verify your account, then sign in.
-                  </p>
-                  <Link
-                    to="/login"
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors"
-                  >
-                    Go to Sign In
-                  </Link>
-                </div>
+                <EmailVerificationPanel
+                  email={email}
+                  title="Check your email"
+                  onBack={() => navigate('/login')}
+                  onVerified={() => {
+                    setSuccess('Email verified successfully!')
+                    navigate('/prediction')
+                  }}
+                />
               ) : (
               <>
                 <button

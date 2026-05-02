@@ -5,6 +5,9 @@ const OPENROUTER_MODEL = import.meta.env.VITE_OPENROUTER_MODEL ?? 'google/gemma-
 const MANUS_API_KEY = import.meta.env.VITE_MANUS_API_KEY
 const MANUS_START_URL = import.meta.env.VITE_MANUS_START_URL ?? 'https://api.manus.ai/v2/task.create'
 const MANUS_POLL_URL = import.meta.env.VITE_MANUS_POLL_URL ?? 'https://api.manus.ai/v2/task.listMessages'
+const CHAT_TIMEOUT_MS = Number(import.meta.env.VITE_CHAT_TIMEOUT_MS ?? 8000)
+const REPORT_POLL_ATTEMPTS = Number(import.meta.env.VITE_REPORT_POLL_ATTEMPTS ?? 8)
+const REPORT_POLL_INTERVAL_MS = Number(import.meta.env.VITE_REPORT_POLL_INTERVAL_MS ?? 2000)
 
 const extractAssistantText = (content: unknown) => {
   if (typeof content === 'string') return content.trim()
@@ -49,19 +52,65 @@ const buildFallbackSupportResponse = (message: string) => {
   return 'I can help with RoadWatch account access, pothole reporting, prediction flow, report tracking, and support steps. If your issue needs a human follow-up, please use the Contact page.'
 }
 
-export const generateAIReport = async (
+const withTimeout = async (url: string, options: RequestInit, timeoutMs: number) => {
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, { ...options, signal: controller.signal })
+  } finally {
+    window.clearTimeout(timeout)
+  }
+}
+
+const buildFastMaintenanceReport = (
+  complaintText: string,
+  severity: string,
+  location: { lat: number; lng: number },
+  detectionResult: any
+) => {
+  const normalizedSeverity = ['Low', 'Medium', 'High', 'Critical'].includes(severity) ? severity : 'Medium'
+  const confidence = detectionResult?.confidence ?? 'unknown'
+  const areaRatio = detectionResult?.metrics?.area_ratio ?? detectionResult?.area_ratio
+  const areaText = typeof areaRatio === 'number' ? `${(areaRatio * 100).toFixed(2)}% of the analyzed frame` : 'not available'
+
+  return {
+    summary: `A ${normalizedSeverity.toLowerCase()} priority pothole report was generated near ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}. The detector confidence is ${confidence}% and the affected surface estimate is ${areaText}.`,
+    riskLevel: normalizedSeverity,
+    recommendedAction: normalizedSeverity === 'Critical' || normalizedSeverity === 'High'
+      ? 'Prioritize inspection and temporary barricading before repair scheduling.'
+      : 'Schedule field verification and batch repair with nearby road defects.',
+    recommendedActions: [
+      'Verify dimensions and lane position on site.',
+      'Capture before/after repair photos.',
+      'Update the report status after assignment and completion.',
+    ],
+    civicImpact: complaintText || 'Potential ride discomfort, vehicle damage, and two-wheeler safety risk if left unresolved.',
+    fieldChecklist: [
+      'Confirm exact GPS point and road direction.',
+      'Measure pothole width, length, and depth.',
+      'Check drainage or repeated waterlogging nearby.',
+      'Assess traffic control needs before repair.',
+    ],
+    timeline: [
+      { phase: 'Triage', when: 'Within 24 hours', actions: ['Review image, severity, and location metadata.'] },
+      { phase: 'Field verification', when: '1-2 days', actions: ['Inspect site and assign repair crew if confirmed.'] },
+      { phase: 'Repair closure', when: 'Based on severity', actions: ['Patch surface, upload proof, and mark resolved.'] },
+    ],
+    assumptions: [
+      'Severity is estimated from the uploaded image and detector metrics.',
+      'Location depends on browser geolocation permission and device accuracy.',
+    ],
+  }
+}
+
+export const generateAIReportWithManus = async (
   complaintText: string,
   severity: string,
   location: { lat: number; lng: number },
   detectionResult: any
 ) => {
   if (!MANUS_API_KEY) {
-    return {
-      summary: 'AI report generation is not configured. Add VITE_MANUS_API_KEY to frontend/.env.local.',
-      riskLevel: 'Unknown',
-      recommendedAction: 'Configure the Manus API key and try again.',
-      civicImpact: 'No automated analysis is available until the report service is configured.',
-    }
+    return buildFastMaintenanceReport(complaintText, severity, location, detectionResult)
   }
 
   const prompt = `
@@ -92,7 +141,7 @@ export const generateAIReport = async (
 
   try {
     // 1. Dispatch Task to Manus API
-    const response = await fetch(MANUS_START_URL, {
+    const response = await withTimeout(MANUS_START_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -101,7 +150,7 @@ export const generateAIReport = async (
       body: JSON.stringify({
         message: { content: prompt }
       })
-    });
+    }, CHAT_TIMEOUT_MS);
 
     const data = await response.json();
     
@@ -112,15 +161,15 @@ export const generateAIReport = async (
     const taskId = data.task_id;
 
     // 2. Poll for completion
-    let maxRetries = 40; // 40 * 3 seconds = 120s max timeout
+    let maxRetries = REPORT_POLL_ATTEMPTS;
     while (maxRetries > 0) {
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise(resolve => setTimeout(resolve, REPORT_POLL_INTERVAL_MS));
       
-      const pollRes = await fetch(`${MANUS_POLL_URL}?task_id=${taskId}&order=desc&limit=50`, {
+      const pollRes = await withTimeout(`${MANUS_POLL_URL}?task_id=${taskId}&order=desc&limit=50`, {
         headers: {
           'x-manus-api-key': MANUS_API_KEY
         }
-      });
+      }, CHAT_TIMEOUT_MS);
       const pollData = await pollRes.json();
 
       if (pollData.ok && pollData.messages) {
@@ -204,15 +253,15 @@ export const generateAIReport = async (
       maxRetries--;
     }
     
-    return { summary: 'Manus AI report generation timed out.' };
+    return buildFastMaintenanceReport(complaintText, severity, location, detectionResult);
     
   } catch (error) {
     console.error('Manus API error:', error)
-    return { summary: 'Unable to generate AI report at this time.' }
+    return buildFastMaintenanceReport(complaintText, severity, location, detectionResult)
   }
 }
 
-export const generateChatResponse = async (message: string, conversationHistory: any[]) => {
+export const generateChatResponseWithOpenRouter = async (message: string, conversationHistory: any[]) => {
   if (!OPENROUTER_API_KEY) {
     return buildFallbackSupportResponse(message)
   }
@@ -223,7 +272,7 @@ If you cannot handle a request, or if the user needs technical assistance, immed
 
   const messages = [
     { role: 'system', content: systemPrompt },
-    ...conversationHistory.map((msg) => ({
+    ...conversationHistory.slice(-8).map((msg) => ({
       role: msg.role === 'user' ? 'user' : 'assistant',
       content: msg.message,
     })),
@@ -243,7 +292,7 @@ If you cannot handle a request, or if the user needs technical assistance, immed
     let lastError = 'The assistant is temporarily unavailable.'
 
     for (const model of fallbackModels) {
-      const response = await fetch(OPENROUTER_URL, {
+      const response = await withTimeout(OPENROUTER_URL, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
@@ -255,7 +304,7 @@ If you cannot handle a request, or if the user needs technical assistance, immed
           model,
           messages,
         }),
-      })
+      }, CHAT_TIMEOUT_MS)
 
       const rawBody = await response.text()
       let data: any = null

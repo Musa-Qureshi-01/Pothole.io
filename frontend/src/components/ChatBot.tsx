@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { MessageSquare, X, Send, Loader2, Bot, User, Sparkles, AlertCircle } from 'lucide-react'
-import { fetchChatHistory, saveChatMessage } from '../api/neon'
+import { ensureAppUser, fetchChatHistory, saveChatMessage } from '../api/neon'
 import { useAuth } from '../context/NeonAuthContext'
-import { generateChatResponse } from '../lib/gemini'
+import { generateChatResponseWithOpenRouter } from '../lib/aiServices'
 
 interface Message {
   id: string
@@ -19,6 +19,7 @@ export const Chatbot = () => {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [initialized, setInitialized] = useState(false)
+  const [appUserId, setAppUserId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -29,6 +30,12 @@ export const Chatbot = () => {
     scrollToBottom()
   }, [messages, isOpen])
 
+  useEffect(() => {
+    setInitialized(false)
+    setMessages([])
+    setAppUserId(null)
+  }, [user?.id])
+
   // Load chat history when chat opens
   useEffect(() => {
     if (isOpen && user && !initialized) {
@@ -38,7 +45,15 @@ export const Chatbot = () => {
 
   const loadChatHistory = async () => {
     try {
-      const { data } = await fetchChatHistory(user?.id || '')
+      const { data: appUser, error } = await ensureAppUser(user!)
+      if (error) console.warn('Could not resolve chat user:', error)
+      if (!appUser?.id) {
+        setInitialized(true)
+        return
+      }
+
+      setAppUserId(appUser.id)
+      const { data } = await fetchChatHistory(appUser.id)
 
       if (data) {
         const formattedMessages = [...data]
@@ -90,11 +105,9 @@ export const Chatbot = () => {
     setLoading(true)
 
     try {
-      // Save user message to DB
-      await saveChatMessage(user?.id || '', userMessage.text, '')
+      const userId = appUserId || (await ensureAppUser(user)).data?.id
 
-      // Get AI response
-      const aiResponse = await generateChatResponse(userMessage.text, messages.map(m => ({
+      const aiResponse = await generateChatResponseWithOpenRouter(userMessage.text, messages.map(m => ({
         role: m.isUser ? 'user' : 'ai',
         message: m.text
       })))
@@ -106,8 +119,10 @@ export const Chatbot = () => {
         timestamp: new Date(),
       }
 
-      // Save AI message to DB
-      await saveChatMessage(user?.id || '', '', aiMessage.text)
+      if (userId) {
+        setAppUserId(userId)
+        await saveChatMessage(userId, userMessage.text, aiMessage.text)
+      }
 
       setMessages((prev) => [...prev, aiMessage])
     } catch (error) {

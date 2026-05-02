@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { PredictionRecord } from '../types/api';
+import { useAuth } from './NeonAuthContext';
 
 interface PredictionsContextValue {
   predictions: PredictionRecord[];
@@ -9,17 +10,30 @@ interface PredictionsContextValue {
 const PredictionsContext = createContext<PredictionsContextValue | null>(null);
 
 export function PredictionsProvider({ children }: { children: ReactNode }) {
-  const [predictions, setPredictions] = useState<PredictionRecord[]>(() => {
+  const { user } = useAuth();
+  const storageKey = user?.id ? `pothole_predictions:${user.id}` : 'pothole_predictions:guest';
+
+  const readPredictions = useCallback((key: string) => {
     try {
-      const saved = localStorage.getItem('pothole_predictions')
+      const saved = localStorage.getItem(key)
       return saved ? JSON.parse(saved) : []
     } catch (e) {
       console.error("Failed to load predictions", e)
       return []
     }
-  });
+  }, [])
+
+  const [loadedKey, setLoadedKey] = useState(storageKey);
+  const [predictions, setPredictions] = useState<PredictionRecord[]>(() => readPredictions(storageKey));
 
   useEffect(() => {
+    setPredictions(readPredictions(storageKey))
+    setLoadedKey(storageKey)
+  }, [readPredictions, storageKey])
+
+  useEffect(() => {
+    if (loadedKey !== storageKey) return
+
     // Determine what to persist - Exclude heavy base64 images to prevent QuotaExceededError
     const toPersist = predictions.map(p => ({
       ...p,
@@ -29,11 +43,11 @@ export function PredictionsProvider({ children }: { children: ReactNode }) {
       maskDataUrl: null
     }))
     try {
-      localStorage.setItem('pothole_predictions', JSON.stringify(toPersist))
+      localStorage.setItem(storageKey, JSON.stringify(toPersist))
     } catch (e) {
       console.warn("LocalStorage quota exceeded, failed to save history", e)
     }
-  }, [predictions]);
+  }, [predictions, storageKey, loadedKey]);
 
   const addPrediction = useCallback((record: Omit<PredictionRecord, 'id'>) => {
     const id = `pred-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
