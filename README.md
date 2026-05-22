@@ -9,7 +9,6 @@
 ## Overview
 
 ## ✨ Overview
->>>>>>> 0af658f2d49595070303d6c393337b00419be0fb
 
 **Pothole Segmentation** is a full-stack civic tech platform that combines:
 - **AI Computer Vision** - YOLO v8 for automatic pothole detection
