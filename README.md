@@ -5,10 +5,9 @@
 > A comprehensive web application that enables citizens to report potholes, track repairs, and engage with a community of civic workers using advanced AI detection and intelligent assistance.
 ## [Preview](https://pothole-io.vercel.app/)
 ---
-<<<<<<< HEAD
 
 ## Overview
-=======
+
 ## ✨ Overview
 >>>>>>> 0af658f2d49595070303d6c393337b00419be0fb
 
