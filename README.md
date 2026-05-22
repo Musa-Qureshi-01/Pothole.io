@@ -150,16 +150,16 @@ npm install
 
 Create `frontend/.env.local`:
 ```env
-VITE_CLERK_PUBLISHABLE_KEY=pk_test_ZW5nYWdlZC10YXBpci03MS5jbGVyay5hY2NvdW50cy5kZXYk
-VITE_NEON_API_URL=https://ep-ancient-pond-aoaofy0n.apirest.c-2.ap-southeast-1.aws.neon.tech/neondb/rest/v1
-VITE_GEMINI_API_KEY=your-gemini-key
-VITE_API_URL=http://127.0.0.1:8000
+VITE_CLERK_PUBLISHABLE_KEY=
+VITE_NEON_API_URL=
+VITE_GEMINI_API_KEY=
+VITE_API_URL=
 ```
 
 Create `backend/.env`:
 ```env
-DATABASE_URL=postgresql://username:password@ep-ancient-pond-aoaofy0n.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
-CORS_ORIGINS=http://localhost:5174,http://localhost:3000
+DATABASE_URL=
+CORS_ORIGINS=http://localhost:xxxx,http://localhost:xxxx
 ```
 
 **3. Run Servers**
