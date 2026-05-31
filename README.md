@@ -14,14 +14,14 @@ RoadWatch AI is an AI-powered road intelligence platform designed to improve roa
 
 The platform combines:
 
-AI Road Damage Detection — Computer vision-based road issue identification
-Smart Reporting System — Citizens can submit and track road reports
-Road Intelligence Dashboard — Infrastructure monitoring and analytics
-AI Assistant — Intelligent guidance and reporting support
-Role-Based Access Control — Citizen, Worker, and Admin workflows
-Governance-Oriented Workflow — Track reports from submission to resolution
-Infrastructure Analytics — Monitoring, reporting, and performance insights
-Neon PostgreSQL Backend — Scalable cloud database architecture
+- AI Road Damage Detection — Computer vision-based road issue identification
+- Smart Reporting System — Citizens can submit and track road reports
+- Road Intelligence Dashboard — Infrastructure monitoring and analytics
+- AI Assistant — Intelligent guidance and reporting support
+- Role-Based Access Control — Citizen, Worker, and Admin workflows
+- Governance-Oriented Workflow — Track reports from submission to resolution
+- Infrastructure Analytics — Monitoring, reporting, and performance insights
+- Neon PostgreSQL Backend — Scalable cloud database architecture
 
 RoadWatch AI transforms a traditional pothole detection platform into a broader Road Monitoring & Governance System focused on public infrastructure management and road safety.
 
@@ -401,7 +401,7 @@ https://musa-qureshi.web.app/
 
 # Author
 
-<div align="center">
+<div>
 
 ## Musa Qureshi
 
