@@ -482,7 +482,7 @@ export function HomePage() {
                     viewport={{ once: true }}
                     transition={{ delay: idx * 0.08, duration: 0.5 }}
                     whileHover={{ y: -6, scale: 1.02 }}
-                    className={`relative flex flex-col items-center text-center p-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 backdrop-blur-sm shadow-md dark:shadow-xl ${item.glow} hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50/50 dark:hover:bg-white/8 transition-all duration-300 cursor-default group`}
+                    className={`relative flex flex-col items-center text-center p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/40 dark:bg-white/5 backdrop-blur-md shadow-sm dark:shadow-xl ${item.glow} hover:border-slate-300 dark:hover:border-white/20 hover:bg-white/80 dark:hover:bg-white/8 transition-all duration-300 cursor-default group`}
                   >
                     {/* Step number */}
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
