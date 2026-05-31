@@ -40,8 +40,8 @@ export function Layout({
             to="/"
             className="text-lg font-bold text-slate-900 dark:text-white tracking-tight shrink-0 flex items-center gap-2"
           >
-            <Logo className="w-8 h-8" />
-            Pothole.io
+            <Logo className="w-9 h-9" />
+            RoadWatch AI
           </Link>
 
           {/* Desktop nav */}

@@ -30,7 +30,7 @@ const buildFallbackSupportResponse = (message: string) => {
   const normalized = message.toLowerCase()
 
   if (normalized.includes('report') || normalized.includes('submit')) {
-    return 'To report a pothole, sign in and open the Prediction page. Upload a road image, review the detection, then submit the report so it reaches the tracking workflow.'
+    return 'To file a road report, sign in and open the Prediction page. Upload a road image, review the detection, then submit the report so it reaches the tracking workflow.'
   }
 
   if (normalized.includes('track') || normalized.includes('status') || normalized.includes('history')) {
@@ -42,14 +42,14 @@ const buildFallbackSupportResponse = (message: string) => {
   }
 
   if (normalized.includes('ai') || normalized.includes('detect') || normalized.includes('prediction')) {
-    return 'The platform uses the prediction workflow to analyze uploaded road images and estimate pothole severity. After detection, you can generate a report and submit it for follow-up.'
+    return 'The platform uses the prediction workflow to analyze uploaded road images and estimate road damage severity. After detection, you can generate a report and submit it for follow-up.'
   }
 
   if (normalized.includes('contact') || normalized.includes('support') || normalized.includes('help')) {
     return 'You can reach support from the Contact page. If your issue needs human follow-up, leave your details there and the team can respond directly.'
   }
 
-  return 'I can help with RoadWatch account access, pothole reporting, prediction flow, report tracking, and support steps. If your issue needs a human follow-up, please use the Contact page.'
+  return 'I can help with RoadWatch AI account access, road monitoring and governance reporting, prediction flow, report tracking, and support steps. If your issue needs a human follow-up, please use the Contact page.'
 }
 
 const withTimeout = async (url: string, options: RequestInit, timeoutMs: number) => {
@@ -266,8 +266,8 @@ export const generateChatResponseWithOpenRouter = async (message: string, conver
     return buildFallbackSupportResponse(message)
   }
 
-  const systemPrompt = `You are a helpful customer support agent for Pothole.io. 
-Keep all your answers EXTREMELY short, sweet, and to the point (1-2 sentences max).
+  const systemPrompt = `You are a helpful support agent for RoadWatch AI (an Intelligent Road Monitoring & Governance Platform). 
+Keep all your answers EXTREMELY short, sweet, and to the point (1-2 sentences max). You have full context on Road Reports, Severity Analysis, Governance Workflows, Authority Assignment, RoadSoS emergency support layers, and the Public Transparency Dashboard.
 If you cannot handle a request, or if the user needs technical assistance, immediately say: "I cannot help with that. Please forward your request to our Contact page so our team can assist you directly."`
 
   const messages = [

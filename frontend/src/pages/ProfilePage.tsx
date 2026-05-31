@@ -452,7 +452,7 @@ export const ProfilePage = () => {
                           </div>
                           <div>
                             <p className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base leading-tight">
-                              {item.complaint_text || 'Pothole Report'}
+                              {item.complaint_text || 'Road Defect Report'}
                             </p>
                             {aiInsight && (
                               <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 max-w-md line-clamp-1">
@@ -503,7 +503,7 @@ export const ProfilePage = () => {
                      <FileText size={20} className="text-slate-400" />
                   </div>
                   <p className="text-slate-600 dark:text-slate-300 font-medium">No reports submitted yet</p>
-                  <p className="text-slate-500 dark:text-slate-500 text-sm mt-1">When you log potholes, they will appear here.</p>
+                  <p className="text-slate-500 dark:text-slate-500 text-sm mt-1">When you log road issues, they will appear here.</p>
                 </div>
               )}
             </CardContent>

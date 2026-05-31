@@ -1,12 +1,13 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Github, Linkedin, Twitter, Mail, MapPin, Phone, Globe } from 'lucide-react';
+import { Logo } from './ui/Logo';
 
 const PRODUCT_LINKS = [
-  { to: '/prediction', label: 'Detection' },
-  { to: '/report', label: 'Reporting' },
-  { to: '/leaderboard', label: 'Leaderboard' },
-  { to: '/profile', label: 'Profile' },
+  { to: '/admin', label: 'Dashboard' },
+  { to: '/report', label: 'Reports' },
+  { to: '/prediction', label: 'Analytics' },
+  { to: '/contact', label: 'RoadSoS' },
 ];
 
 const COMPANY_LINKS = [
@@ -54,13 +55,14 @@ export function Footer() {
             viewport={{ once: true }}
             className="col-span-2 md:col-span-4 lg:col-span-4"
           >
-            <Link to="/" className="inline-block mb-4">
-              <span className="text-2xl font-black bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-                RoadWatch
+            <Link to="/" className="inline-flex items-center gap-2 mb-4">
+              <Logo className="w-8 h-8" />
+              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                RoadWatch AI
               </span>
             </Link>
-            <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed text-sm">
-              AI-powered civic infrastructure platform transforming how cities detect, report, and fix potholes faster.
+            <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed text-sm font-medium">
+              AI-Powered Road Intelligence, Governance & Emergency Support Platform
             </p>
             <div className="flex gap-3">
               {SOCIAL.map((social) => {
@@ -92,7 +94,7 @@ export function Footer() {
             className="col-span-1 md:col-span-1 lg:col-span-2"
           >
             <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 sm:mb-6">
-              Product
+              Quick Links
             </h3>
             <ul className="space-y-2 sm:space-y-3">
               {PRODUCT_LINKS.map((link) => (
@@ -175,22 +177,22 @@ export function Footer() {
             <ul className="space-y-4">
               <li className="flex gap-3 items-start">
                 <Mail className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-                <a href="mailto:support@potholeai.com" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
-                  support@potholeai.com
+                <a href="mailto:support@roadwatch.ai" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                  support@roadwatch.ai
                 </a>
               </li>
               <li className="flex gap-3 items-start">
                 <Phone className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-                <a href="tel:+1234567890" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
-                  +1 (555) 123-4567
+                <a href="tel:+919876543210" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                  +91 98765 43210
                 </a>
               </li>
               <li className="flex gap-3 items-start">
                 <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
                 <span className="text-sm text-slate-600 dark:text-slate-400">
-                  123 Civic Road<br />
-                  San Francisco, CA 94105<br />
-                  United States
+                  4th Floor, IndiaTech Tower<br />
+                  Bandra Kurla Complex<br />
+                  Mumbai — 400 051, India
                 </span>
               </li>
             </ul>

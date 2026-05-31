@@ -89,7 +89,7 @@ export const LeaderboardPage = () => {
         <h3 className="font-semibold text-indigo-900 dark:text-indigo-100 mb-2">How Scoring Works</h3>
         <ul className="text-sm text-indigo-800 dark:text-indigo-200 space-y-1">
           <li>• 10 points for each report submitted</li>
-          <li>• 50 points for each resolved pothole</li>
+          <li>• 50 points for each resolved road issue</li>
           <li>• Leaderboard resets monthly</li>
           <li>• Top contributors get community recognition</li>
         </ul>

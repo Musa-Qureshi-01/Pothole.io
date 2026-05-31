@@ -15,6 +15,14 @@ const badgeVariants = cva(
                 outline: 'text-slate-950 dark:text-slate-50',
                 success: 'border-transparent bg-emerald-500 text-white hover:bg-emerald-600',
                 warning: 'border-transparent bg-amber-500 text-white hover:bg-amber-600',
+                severity_low:
+                    'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400',
+                severity_medium:
+                    'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+                severity_high:
+                    'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+                severity_critical:
+                    'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400',
             },
         },
         defaultVariants: {

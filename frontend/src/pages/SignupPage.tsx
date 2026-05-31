@@ -128,7 +128,7 @@ export const SignupPage = () => {
           <div className="w-8 h-8 bg-slate-900 dark:bg-white rounded-lg flex items-center justify-center text-white dark:text-slate-900">
             <Target size={18} />
           </div>
-          RoadWatch
+          RoadWatch AI
         </Link>
         <div className="flex items-center gap-4">
           <Link to="/" className="flex items-center gap-1.5 font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
@@ -146,7 +146,7 @@ export const SignupPage = () => {
             <div className="relative z-10">
               <div className="text-center mb-6">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Create an account</h1>
-                <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">Get started with Pothole AI</p>
+                <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">Get started with RoadWatch AI</p>
               </div>
 
               {error && (

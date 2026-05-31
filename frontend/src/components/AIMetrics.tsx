@@ -105,7 +105,7 @@ export function AIMetrics({ confidence, area_pixels, area_ratio }: AIMetricsProp
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Severity Card */}
                     <div className="bg-slate-50 dark:bg-slate-900/30 rounded-xl p-4 border border-slate-100 dark:border-slate-800 flex flex-col justify-center">
-                        <span className="text-xs font-semibold text-slate-500 uppercase mb-2">Pothole Severity</span>
+                        <span className="text-xs font-semibold text-slate-500 uppercase mb-2">Road Damage Severity</span>
                         <div className="flex items-center gap-3">
                             <div className={`px-3 py-1 rounded-full text-sm font-bold ${severity.bg} ${severity.color}`}>
                                 {severity.level}

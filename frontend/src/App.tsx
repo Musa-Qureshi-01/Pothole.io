@@ -100,9 +100,7 @@ export default function App() {
                         <Route
                           path="/admin"
                           element={
-                            <ProtectedRoute requiredRole="admin">
-                              <AdminDashboard />
-                            </ProtectedRoute>
+                            <AdminDashboard />
                           }
                         />
                         <Route
@@ -133,6 +131,7 @@ export default function App() {
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/contact" element={<Layout mode="public"><ContactPage /></Layout>} />
+            <Route path="/admin" element={<Layout mode="public"><AdminDashboard /></Layout>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         )}

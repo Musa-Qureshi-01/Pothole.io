@@ -6,7 +6,7 @@ export function downloadReportAsImage(record: PredictionRecord, filename?: strin
   if (!dataUrl) return;
   const a = document.createElement('a');
   a.href = dataUrl;
-  a.download = filename ?? `pothole-report-${record.id}.png`;
+  a.download = filename ?? `roadwatch-report-${record.id}.png`;
   a.click();
 }
 
@@ -17,7 +17,7 @@ export function downloadReportAsPDF(record: PredictionRecord) {
   let y = 20;
 
   doc.setFontSize(18);
-  doc.text('Pothole Detection Report', margin, y);
+  doc.text('RoadWatch AI Detection Report', margin, y);
   y += 12;
 
   doc.setFontSize(11);
@@ -27,7 +27,7 @@ export function downloadReportAsPDF(record: PredictionRecord) {
     doc.text(`Location: ${record.location.lat.toFixed(5)}, ${record.location.lng.toFixed(5)}`, margin, y);
     y += 6;
   }
-  doc.text(`Result: ${record.isPothole ? 'Pothole detected' : 'No pothole'}`, margin, y);
+  doc.text(`Result: ${record.isPothole ? 'Road Damage detected' : 'Road Surface Clear'}`, margin, y);
   y += 6;
   const confVal = record.confidence > 1 ? record.confidence : record.confidence * 100;
   doc.text(`Confidence: ${confVal.toFixed(1)}%`, margin, y);
@@ -48,7 +48,7 @@ export function downloadReportAsPDF(record: PredictionRecord) {
     doc.addImage(imgData, 'PNG', margin, y, maxW, maxH);
   }
 
-  doc.save(`pothole-report-${record.id}.pdf`);
+  doc.save(`roadwatch-report-${record.id}.pdf`);
 }
 
 export function downloadReportAsJSON(record: PredictionRecord) {
@@ -65,7 +65,7 @@ export function downloadReportAsJSON(record: PredictionRecord) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `pothole-report-${record.id}.json`;
+  a.download = `roadwatch-report-${record.id}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }

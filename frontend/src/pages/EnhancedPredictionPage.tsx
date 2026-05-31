@@ -119,7 +119,7 @@ export const EnhancedPredictionPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-glass border border-slate-200/50 dark:border-slate-700/50"
         >
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Submit Pothole Report</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Submit Road Damage Report</h3>
 
           <div className="space-y-4">
             <div>
@@ -141,7 +141,7 @@ export const EnhancedPredictionPage = () => {
               <textarea
                 value={complaintText}
                 onChange={(e) => setComplaintText(e.target.value)}
-                placeholder="Describe the pothole condition, traffic impact, etc."
+                placeholder="Describe surface conditions, traffic obstruction, or lane hazards."
                 className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                 rows={4}
               />

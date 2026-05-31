@@ -97,8 +97,8 @@ export function ContactPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-slate-900 dark:text-white">Email Us</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">support@potholeai.com</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">partners@potholeai.com</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">support@roadwatch.ai</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">partners@roadwatch.ai</p>
                 </div>
               </div>
 
@@ -204,7 +204,7 @@ export function ContactPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Subject</label>
                   <Input
-                    placeholder="e.g. Reporting a pothole in Indiranagar"
+                    placeholder="e.g. Reporting a road defect in Indiranagar"
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                     required

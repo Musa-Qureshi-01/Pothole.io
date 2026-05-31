@@ -115,7 +115,7 @@ export const WorkerTaskPage = () => {
                       </span>
                     </div>
                     <h3 className="font-semibold text-slate-900 dark:text-white text-lg">
-                      Pothole Repair at {task.reports?.latitude?.toFixed(4)}, {task.reports?.longitude?.toFixed(4)}
+                      Road Surface Repair at {task.reports?.latitude?.toFixed(4)}, {task.reports?.longitude?.toFixed(4)}
                     </h3>
                   </div>
                 </div>

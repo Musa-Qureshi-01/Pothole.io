@@ -143,9 +143,9 @@ export const Chatbot = () => {
   if (!user) return null
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
       {isOpen && (
-        <div className="mb-4 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-[22rem] sm:w-96 h-[32rem] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden ring-1 ring-slate-900/5 transition-all duration-200">
+        <div className="mb-4 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-[calc(100vw-2rem)] sm:w-96 h-[30rem] sm:h-[32rem] max-h-[calc(100vh-6rem)] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden ring-1 ring-slate-900/5 transition-all duration-200">
           {/* Header */}
           <div className="bg-slate-900 dark:bg-slate-950 text-white p-4 flex justify-between items-center border-b border-slate-800">
             <div className="flex items-center gap-3">
@@ -153,7 +153,7 @@ export const Chatbot = () => {
                 <Bot size={20} className="text-emerald-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Pothole Assistant</h3>
+                <h3 className="font-semibold text-sm">RoadWatch AI Assistant</h3>
                 <p className="text-xs text-slate-400 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Online
@@ -176,7 +176,7 @@ export const Chatbot = () => {
                   <Sparkles size={24} className="text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <p className="font-medium text-slate-900 dark:text-white">How can I help you?</p>
-                <p className="text-xs max-w-[200px]">Ask about reporting potholes, tracking status, or app features.</p>
+                <p className="text-xs max-w-[200px]">Ask about road reports, severity analysis, governance workflows, authority assignment, RoadSoS support, or the transparency dashboard.</p>
               </div>
             )}
 

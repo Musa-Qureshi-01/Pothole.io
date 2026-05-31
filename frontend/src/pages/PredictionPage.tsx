@@ -5,6 +5,7 @@ import { usePredictions } from '../context/PredictionsContext';
 import { useAuth } from '../context/NeonAuthContext';
 import { DetectionMap } from '../components/DetectionMap';
 import { AIMetrics } from '../components/AIMetrics';
+import { AuthorityCopilotCard } from '../components/AuthorityCopilotCard';
 import type { PotholePredictionResponse } from '../types/api';
 import { savePredictionReport } from '../api/reports';
 import { ensureAppUser } from '../api/neon';
@@ -178,7 +179,7 @@ export function PredictionPage() {
         transition={{ duration: 0.4 }}
       >
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Run Detection</h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-1">Upload an image to detect potholes and get a segmentation overlay.</p>
+        <p className="text-slate-600 dark:text-slate-400 mt-1">Upload road surface images to perform real-time segmentations and extract structural health metrics.</p>
       </motion.div>
 
       <motion.div
@@ -293,7 +294,7 @@ export function PredictionPage() {
             >
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Use your location?</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                Location helps attach this pothole report to the right place. You can still run detection without sharing it.
+                Location helps attach this road hazard report to the right place. You can still run detection without sharing it.
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <button
@@ -404,6 +405,8 @@ export function PredictionPage() {
               />
               <p className="text-slate-600 dark:text-slate-400 text-sm mt-3 border-t border-slate-200 dark:border-slate-700 pt-3">{result.message}</p>
             </motion.div>
+
+            <AuthorityCopilotCard areaRatio={result.metrics?.area_ratio ?? undefined} />
           </motion.section>
         )}
       </AnimatePresence>

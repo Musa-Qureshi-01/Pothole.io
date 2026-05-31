@@ -4,6 +4,7 @@ import { usePredictions } from '../context/PredictionsContext';
 import { downloadReportAsPDF, downloadReportAsJSON } from '../lib/report';
 import { generateAIReportWithManus } from '../lib/aiServices';
 import { AIMetrics } from '../components/AIMetrics';
+import { SeverityBadge } from '../components/SeverityBadge';
 import { useAuth } from '../context/NeonAuthContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -174,7 +175,7 @@ export function ReportPage() {
                   onChange={(e) => setComplaint(e.target.value)}
                   rows={4}
                   className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
-                  placeholder="e.g. Large pothole on 100ft Road, Indiranagar. Causing slow traffic and potential hazard for two-wheelers..."
+                  placeholder="e.g. Surface structural cracking on 100ft Road, Indiranagar. Causing slow traffic and potential hazard for two-wheelers..."
                 />
               </div>
 
@@ -220,12 +221,7 @@ export function ReportPage() {
                     <CardTitle className="text-xl">AI Analysis Result</CardTitle>
                     <CardDescription>Generated on {new Date().toLocaleDateString()}</CardDescription>
                   </div>
-                  <Badge variant={
-                    generated.severityLevel === 'High' ? 'destructive' :
-                      generated.severityLevel === 'Medium' ? 'warning' : 'success'
-                  }>
-                    {generated.severityLevel} Severity
-                  </Badge>
+                   <SeverityBadge severity={generated.severityLevel?.toLowerCase() as any} size="md" />
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
