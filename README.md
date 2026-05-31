@@ -358,7 +358,7 @@ Including:
 
 Demo
 
-https://pothole-io.vercel.app/
+https://roadwatch-io.vercel.app/
 
 ### Documentation & Assets
 
@@ -376,7 +376,7 @@ Coming Soon
 
 GitHub Repository
 
-https://github.com/Musa-Qureshi-01/Pothole.io
+https://github.com/Musa-Qureshi-01/RoadWatch
 
 Portfolio
 
