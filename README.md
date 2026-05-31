@@ -14,14 +14,14 @@ RoadWatch AI is an AI-powered road intelligence platform designed to improve roa
 
 The platform combines:
 
-- AI Road Damage Detection — Computer vision-based road issue identification
-- Smart Reporting System — Citizens can submit and track road reports
-- Road Intelligence Dashboard — Infrastructure monitoring and analytics
-- AI Assistant — Intelligent guidance and reporting support
-- Role-Based Access Control — Citizen, Worker, and Admin workflows
-- Governance-Oriented Workflow — Track reports from submission to resolution
-- Infrastructure Analytics — Monitoring, reporting, and performance insights
-- Neon PostgreSQL Backend — Scalable cloud database architecture
+- AI Road Damage Detection - Computer vision-based road issue identification
+- Smart Reporting System - Citizens can submit and track road reports
+- Road Intelligence Dashboard - Infrastructure monitoring and analytics
+- AI Assistant - Intelligent guidance and reporting support
+- Role-Based Access Control - Citizen, Worker, and Admin workflows
+- Governance-Oriented Workflow - Track reports from submission to resolution
+- Infrastructure Analytics - Monitoring, reporting, and performance insights
+- Neon PostgreSQL Backend - Scalable cloud database architecture
 
 RoadWatch AI transforms a traditional pothole detection platform into a broader Road Monitoring & Governance System focused on public infrastructure management and road safety.
 
@@ -362,25 +362,13 @@ https://roadwatch-io.vercel.app/
 
 ### Documentation & Assets
 
-Project Report
+Project Report -
 
-Coming Soon
+Presentation Deck (PPT) - 
 
-Presentation Deck (PPT)
+Demo Video - Coming Soon
 
-Coming Soon
-
-Demo Video
-
-Coming Soon
-
-GitHub Repository
-
-https://github.com/Musa-Qureshi-01/RoadWatch
-
-Portfolio
-
-https://musa-qureshi.web.app/
+GitHub Repository - https://github.com/Musa-Qureshi-01/RoadWatch
 
 ---
 
@@ -411,21 +399,13 @@ Building AI-powered systems, civic-tech platforms, intelligent automation tools,
 
 ### Connect
 
-LinkedIn
+LinkedIn - https://www.linkedin.com/in/musa-qureshi
 
-https://www.linkedin.com/in/musa-qureshi
+Portfolio - https://musa-qureshi.web.app/
 
-Portfolio
+GitHub - https://github.com/Musa-Qureshi-01
 
-https://musa-qureshi.web.app/
-
-GitHub
-
-https://github.com/Musa-Qureshi-01
-
-X
-
-https://x.com/musa_qureshi_01
+X - https://x.com/musa_qureshi_01
 
 </div>
 
